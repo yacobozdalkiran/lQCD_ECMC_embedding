@@ -148,8 +148,6 @@ void compute_reject_angles(const vector<Complex> &links, size_t site, int mu, co
         A *= -(beta/3.0);
         B *= -(beta/3.0);
 
-        if ((abs(A)>10)||(abs(B)>10)) cerr << "A = " << A << ", B = " << B << endl;
-        //cout << "A = " << A << ", B = " << B << endl;
         compute_reject(A, B, gamma, reject_angles[i], epsilon);
     }
 }
