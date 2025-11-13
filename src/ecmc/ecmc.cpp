@@ -45,7 +45,7 @@ void compute_reject(double A, double B, double &gamma, double &reject, int epsil
         //cout << "cas 1"<< endl;
         intervals[1] = M_PI/2.0 + phi;
         intervals[2] = 3*M_PI/2.0 + phi;
-        p1 =R * ( sin(intervals[1] - phi) - sin(intervals[0] - phi) );
+        p1 = R * ( sin(intervals[1] - phi) - sin(intervals[0] - phi) );
         p2 = R * ( sin(intervals[3] - phi) - sin(intervals[2] - phi) );
         if ((p1<0)&&(p2<0)) cerr << "Périodes négatives !"<< endl;
         period = p1+p2;
@@ -81,7 +81,7 @@ void compute_reject(double A, double B, double &gamma, double &reject, int epsil
         intervals[2] = -M_PI/2.0 + phi;
         //cout << "[" << intervals[0] << ", " << intervals[1] << "]" << endl;
         //cout << "[" << intervals[2] << ", " << intervals[3] << "]" << endl;
-        p1 =R * ( sin(intervals[1] - phi) - sin(intervals[0] - phi) );
+        p1 = R * ( sin(intervals[1] - phi) - sin(intervals[0] - phi) );
         p2 = R * ( sin(intervals[3] - phi) - sin(intervals[2] - phi) );
         if ((p1<0)&&(p2<0)) cerr << "Périodes négatives !"<< endl;
         period = p1+p2;
