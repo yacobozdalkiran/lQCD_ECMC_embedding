@@ -51,11 +51,16 @@ void metropolis_sweep(vector<Complex> &links, const Lattice &lat, double beta, m
 
 vector<double> metropolis_samples(vector<Complex> &links, const Lattice &lat, double beta, double epsilon, int n_set, int n_meas, int n_sweeps_meas, int n_hits, int n_burnin, size_t &accepted, size_t &proposed, mt19937_64 &rng) {
     //Effectue l'algo metropolis
-    cout << "Création du set de matrices...\n";
+    // n_set : nb de sweeps entre changement de set
+    // n_sweeps_meas : nb de sweeps entre mesures
+    // n_meas : nb de mesures demandées
+    // n_burnin : nb de sweeps pour burnin
+    // n_hits : nb de hits par lien dans un sweep
+
     int size_set = 50;
     auto set = metropolis_set(epsilon,size_set,rng);
 
-    cout << "\nDémarrage du Metropolis, beta = " << beta <<"\n";
+    cout << "\nStarting Metropolis, beta = " << beta <<", epsilon = " << epsilon << "\n";
     cout << "Burn-in...\n";
     for (int i = 0; i < n_burnin; i++) {
         if (i%n_set ==0) set = metropolis_set(epsilon,size_set,rng);
