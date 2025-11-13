@@ -5,6 +5,15 @@ set(CMAKE_CXX_STANDARD 20)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -g -fno-omit-frame-pointer -march=native -Wall -Wextra")
 
+# Télécharge Eigen automatiquement si absent
+include(FetchContent)
+FetchContent_Declare(
+        eigen
+        GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
+        GIT_TAG 3.4.0  # version stable actuelle
+)
+FetchContent_MakeAvailable(eigen)
+
 add_executable(test_metropolis
         src/lattice/lattice.cpp
         src/lattice/lattice.h
@@ -16,6 +25,8 @@ add_executable(test_metropolis
         src/metropolis/metropolis.cpp
         src/bins/test_metropolis.cpp)
 
+target_link_libraries(test_metropolis PRIVATE Eigen3::Eigen)
+
 add_executable(test_ecmc
         src/bins/test_ecmc.cpp
         src/lattice/lattice.cpp
@@ -26,3 +37,5 @@ add_executable(test_ecmc
         src/observables/observables.cpp
         src/ecmc/ecmc.h
         src/ecmc/ecmc.cpp)
+
+target_link_libraries(test_ecmc PRIVATE Eigen3::Eigen)

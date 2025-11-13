@@ -71,7 +71,7 @@ void in_main_metropolis() {
         if (i%n_meas==0) {
             auto plaq = plaquette_stats(links, lat);
             measures[i/n_meas] = plaq.mean;
-            cout << "Metropolis step "<< i <<", <P> = " << plaq.mean << " ± " << plaq.stddev << ", acceptance = " << double(accepted) / double(proposed) << endl;
+            cout << "Measure " << i/n_meas << ", " << "Metropolis step "<< i <<", <P> = " << plaq.mean << " ± " << plaq.stddev << ", acceptance = " << double(accepted) / double(proposed) << endl;
         }
     }
     auto end = chrono::high_resolution_clock::now();
