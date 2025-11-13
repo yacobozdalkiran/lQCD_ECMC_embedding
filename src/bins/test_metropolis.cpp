@@ -41,7 +41,6 @@ void in_main_metropolis() {
     size_t proposed = 0;
 
     vector<double> measures = metropolis_samples(links, lat, beta, epsilon, n_set, n_meas, n_sweeps_meas, n_hits, n_burnin, accepted, proposed, rng);
-    auto end = std::chrono::system_clock::now();
 
     cout << "Writing to file...\n";
     ofstream file("metro_plaquette_hot.txt");

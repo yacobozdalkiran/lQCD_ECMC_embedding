@@ -253,7 +253,6 @@ vector<double> ecmc_samples(vector<Complex> &links, const Lattice &lat, double b
 
     int samples = 0;
     array<double,2> deltas = {0.0,0.0};
-    int event_counter = 0;
     //TODO:ajouter event-counter pour comparaison avec Metropolis
     vector<double> meas_plaquette;
     while (samples < N_samples) {
