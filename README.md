@@ -138,5 +138,6 @@ Sample 9, <P> = 0.541747 +- 0.00306963, 31548 events
 Final plaquette : 
 <P> = 0.541736 ± 0.00306955
 Writing data...
-
 ```
+
+Both executables write the samples of mean plaquette in a `.txt` file located in the same directory.
