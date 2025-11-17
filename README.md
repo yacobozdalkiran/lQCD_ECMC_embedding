@@ -1,8 +1,8 @@
 ## Event-Chain and Metropolis algorithms for pure gauge SU(3) lattice QCD
 
 This is a set of algorithms for pure gauge SU(3) lattice QCD with Wilson action. 
-It contains an implementation of Event-Chain Monte Carlo and Metropolis to generate gauge
-configurations.
+It contains an implementation of Event-Chain Monte Carlo with XY-Embedding and Metropolis with SU(2) embedding
+to generate gauge configurations.
 
 The compilation uses `CMake` and the package `Eigen` for linear algebra.
 
