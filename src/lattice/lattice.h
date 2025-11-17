@@ -24,8 +24,8 @@ struct Lattice {
     vector<array<array<size_t,2>,4>> neighbor;
     vector<array<array<array<pair<size_t,int>,3>,6>,4>> staples;
 
+
     Lattice(int Nx_, int Ny_, int Nz_, int Nt_);
-    [[nodiscard("Lattice::index() return value must not be ignored")]]
     inline size_t index(int x, int y, int z, int t) const {
         return ((static_cast<size_t>(t)*Nz + z) * Ny + y)*Nx + x;
     }
