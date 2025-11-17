@@ -16,7 +16,7 @@ double mean_plaquette(const vector<Complex> &links, const Lattice &lat) {
             counter += 6; //6 plaquettes par site
         }
     }
-    return result / double(counter);
+    return result / static_cast<double>(counter);
 }
 
 PlaquetteStats plaquette_stats(const vector<Complex> &links, const Lattice &lat) {
@@ -36,9 +36,9 @@ PlaquetteStats plaquette_stats(const vector<Complex> &links, const Lattice &lat)
         }
     }
 
-    double mean = sum / double(counter);
-    double var = (sum2 / double(counter)) - mean * mean;
-    double stddev = std::sqrt(var / double(counter)); // erreur sur la moyenne (σ/√N)
+    double mean = sum / static_cast<double>(counter);
+    double var = (sum2 / static_cast<double>(counter)) - mean * mean;
+    double stddev = std::sqrt(var / static_cast<double>(counter)); // erreur sur la moyenne (σ/√N)
 
     return {mean, stddev};
 }

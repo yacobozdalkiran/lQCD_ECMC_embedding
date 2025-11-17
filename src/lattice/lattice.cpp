@@ -10,7 +10,7 @@ using SU3 = Eigen::Matrix3cd;
 using namespace std;
 
 Lattice::Lattice(int Nx_, int Ny_, int Nz_, int Nt_) : Nx(Nx_), Ny(Ny_), Nz(Nz_), Nt(Nt_) {
-    V = size_t(Nx) * Ny * Nz * Nt;
+    V = static_cast<size_t>(Nx) * Ny * Nz * Nt;
     neighbor.resize(V);
     //Calcul des voisins de chaque site avec conditions aux bords périodiques
     for (int t = 0; t < Nt; t++) {

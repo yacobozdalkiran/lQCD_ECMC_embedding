@@ -6,23 +6,21 @@
 #include <chrono>
 #include "../observables/observables.h"
 
-void metropolis_sweep(vector<Complex> &links, const Lattice &lat, double beta, mt19937_64 &rng, vector<SU3> &set, size_t &accepted, size_t &proposed, int n_hits) {
+void metropolis_sweep(vector<Complex> &links, const Lattice &lat, double beta, mt19937_64 &rng, const vector<SU3> &set, size_t &accepted, size_t &proposed, int n_hits) {
     //Effectue un sweep metropolis avec n_hits hits à chaque lien.
     SU3 staple;
-    SU3 Uold;
     SU3 Unew;
     accepted = 0;
     proposed = 0;
     int i_set = 0;
-    uniform_int_distribution<int> index_set(0, set.size() - 1);
+    uniform_int_distribution<int> index_set(0, static_cast<int>(set.size()) - 1);
     uniform_real_distribution<double> unif(0.0, 1.0);
     for (size_t site = 0; site < lat.V; site++) {
         for (int mu = 0; mu < 4; mu++) {
-
             //On copie la staple et Uold
             compute_staple(links, lat, site, mu, staple);
             auto Umap = view_link(links, site, mu);
-            Uold = Umap;
+            SU3 Uold = Umap;
 
             for (int i =0; i < n_hits; i++) {
                 //On choisit une matrice d'update dans set
@@ -41,7 +39,7 @@ void metropolis_sweep(vector<Complex> &links, const Lattice &lat, double beta, m
                 if ((dS <= 0.0)||(unif(rng) < exp(-dS))) accept = true;
 
                 if (accept) {
-                    Umap = Unew;
+                    Umap.noalias() = Unew; //Unew et Umap ne se chevauchent pas -> safe
                     ++accepted;
                 }
             }
@@ -76,7 +74,7 @@ vector<double> metropolis_samples(vector<Complex> &links, const Lattice &lat, do
         if (i%n_sweeps_meas==0) {
             auto plaq = plaquette_stats(links, lat);
             measures[i/n_sweeps_meas] = plaq.mean;
-            cout << "Measure " << i/n_sweeps_meas << ", " << "Metropolis step "<< i <<", <P> = " << plaq.mean << " ± " << plaq.stddev << ", acceptance = " << double(accepted) / double(proposed) << endl;
+            cout << "Measure " << i/n_sweeps_meas << ", " << "Metropolis step "<< i <<", <P> = " << plaq.mean << " ± " << plaq.stddev << ", acceptance = " << static_cast<double>(accepted) / static_cast<double>(proposed) << endl;
         }
     }
     auto end = chrono::high_resolution_clock::now();

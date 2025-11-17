@@ -133,18 +133,13 @@ void compute_reject(double A, double B, double &gamma, double &reject, int epsil
 
 void compute_reject_angles(const vector<Complex> &links, size_t site, int mu, const array<SU3,6> &list_staple, const SU3 &R, int epsilon, const double &beta, array<double,6> &reject_angles, mt19937_64 &rng) {
     //Calcule la liste des 6 angles de rejets pour le lien (site, mu) (1 angle par plaquette associée au lien)
-    double gamma;
-    SU3 P;
-    double A = 0;
-    double B = 0;
-
     uniform_real_distribution<double> unif(0.0,1.0);
     for (int i = 0; i < 6; i++) {
-        gamma = -log(unif(rng));
+        double gamma = -log(unif(rng));
 
-        P = R.adjoint() * view_link_const(links, site, mu) * list_staple[i] * R;
-        A = P(0,0).real() + P(1,1).real();
-        B = -P(0,0).imag() + P(1,1).imag();
+        SU3 P = R.adjoint() * view_link_const(links, site, mu) * list_staple[i] * R;
+        double A = P(0,0).real() + P(1,1).real();
+        double B = -P(0,0).imag() + P(1,1).imag();
         A *= -(beta/3.0);
         B *= -(beta/3.0);
 
@@ -157,7 +152,7 @@ int selectVariable(const vector<double> &probas, mt19937_64 &rng) {
     uniform_real_distribution<double> unif(0.0,1.0);
     double r = unif(rng);
     double s = 0.0;
-    for (int i = 0; i < probas.size(); i++) {
+    for (int i = 0; i < static_cast<int>(probas.size()); i++) {
         s += probas[i];
         if (s>r) {
            return i;
@@ -281,14 +276,14 @@ vector<double> ecmc_samples(vector<Complex> &links, const Lattice &lat, double b
     while (samples < N_samples) {
         compute_list_staples(links, lat, site_current, mu_current, list_staple);
         compute_reject_angles(links, site_current, mu_current, list_staple, R, epsilon_current,beta,reject_angles,rng);
-        auto it = std::min_element(reject_angles.begin(), reject_angles.end());
-        auto j = distance(reject_angles.begin(), it); //theta_reject = reject_angles[j]
+        auto it = std::ranges::min_element(reject_angles.begin(), reject_angles.end());
+        auto j = static_cast<int>(ranges::distance(reject_angles.begin(), it)); //theta_reject = reject_angles[j]
         //cout << "Angle reject : " << reject_angles[j] << endl;
         deltas[0] = theta_sample - reject_angles[j] - theta_parcouru_sample;
         deltas[1] = theta_refresh - reject_angles[j] - theta_parcouru_refresh;
 
-        auto it_deltas = std::min_element(deltas.begin(), deltas.end());
-        auto F = distance(deltas.begin(), it_deltas);
+        auto it_deltas = std::ranges::min_element(deltas.begin(), deltas.end());
+        auto F = static_cast<int>(ranges::distance(deltas.begin(), it_deltas));
 
         if ((deltas[0]<0)&&(deltas[1]<0)) {
             if (F == 0) {
@@ -391,25 +386,22 @@ vector<double> ecmc_samples(vector<Complex> &links, const Lattice &lat, double b
     return meas_plaquette;
 }
 
-int update_until_reject_d(vector<Complex> &links, size_t site, int mu, array<SU3, 6> &list_staple,
+int update_until_reject_d(vector<Complex> &links, size_t site, int mu, const array<SU3, 6> &list_staple,
     const SU3 &R, int epsilon, const double &beta, const double &eta, mt19937_64 &rng) {
     //Propose au lien des updates avec embedding jusqu'à ce qu'exactement une plaquette refuse le move.
     //Continue les propositions tant que plusieurs ou aucune plaquette refuse.
     //Renvoie l'angle de rejet et l'indice de la plaquette dans list_staples correspondant
     double theta_update = 0.0;
-    array<int, 6> accepted_angles;
+    array<int, 6> accepted_angles{};
     uniform_real_distribution<double> theta_dist(0.2, eta); //Pour tirer l'angle theta entre 0 et eta
     uniform_real_distribution<double> unif(0.0, 1.0); //Pour test metropolis
-    SU3 proposition;
-    SU3 Uold;
-    SU3 Unew;
     int proposed = 0;
     while (true) {
         theta_update = epsilon * theta_dist(rng);
         for (int i = 0; i < 6; i++) {
-            proposition = R * el_3(theta_update) * R.adjoint();
-            Uold = view_link_const(links, site, mu);
-            Unew = proposition * view_link_const(links, site, mu);
+            SU3 proposition = R * el_3(theta_update) * R.adjoint();
+            SU3 Uold = view_link_const(links, site, mu);
+            SU3 Unew = proposition * view_link_const(links, site, mu);
             double old_tr = (Uold * list_staple[i]).trace().real();
             double new_tr = (Unew * list_staple[i]).trace().real();
             double dS = -(beta/3.0) * (new_tr - old_tr);
@@ -427,9 +419,9 @@ int update_until_reject_d(vector<Complex> &links, size_t site, int mu, array<SU3
             ecmc_update(links, site, mu, theta_update, epsilon, R);
         }
         if (sum == 5) {
-            //cout << proposed << " propositions" << endl;
-            auto it  = min_element(accepted_angles.begin(), accepted_angles.end());
-            int j = distance(accepted_angles.begin(), it);
+            cout << proposed << " propositions" << endl;
+            auto it  = ranges::min_element(accepted_angles.begin(), accepted_angles.end());
+            int j = static_cast<int>(ranges::distance(accepted_angles.begin(), it));
             return j;
         }
     }

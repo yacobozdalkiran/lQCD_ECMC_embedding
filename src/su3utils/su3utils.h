@@ -15,11 +15,11 @@ using SU3 = Eigen::Matrix3cd;
 
 using namespace std;
 
-inline double dsign(double x) {
+inline int dsign(double x) {
     //fonction signe pour double
     if (x>0) return 1;
     if (x<0) return -1;
-    return 0.0;
+    return 0;
 }
 
 inline SU3 el_3(double xi) {

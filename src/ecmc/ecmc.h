@@ -22,6 +22,6 @@ void ecmc_update(vector<Complex> &links, size_t site, int mu, double theta, int 
 vector<double> ecmc_samples(vector<Complex> &links, const Lattice &lat, double beta, int N_samples, double param_theta_sample, double param_theta_refresh, mt19937_64 &rng, bool poisson);
 
 //ECMC temps discret
-int update_until_reject_d(vector<Complex> &links, size_t site, int mu, array<SU3, 6> &list_staple,
+int update_until_reject_d(vector<Complex> &links, size_t site, int mu, const array<SU3, 6> &list_staple,
     const SU3 &R, int epsilon, const double &beta, const double &eta, mt19937_64 &rng);
 #endif //LQCD_ECMC_EMBEDDING_ECMC_H
