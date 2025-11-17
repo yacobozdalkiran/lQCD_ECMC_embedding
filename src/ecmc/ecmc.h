@@ -21,4 +21,9 @@ void ecmc_update(vector<Complex> &links, size_t site, int mu, double theta, int 
 
 vector<double> ecmc_samples(vector<Complex> &links, const Lattice &lat, double beta, int N_samples, double theta_sample, double theta_refresh, mt19937_64 &rng);
 
+//TODO : coder ecmc en temps discret pour voir si pb dans le rejet ou dans les probas de lift
+
+//ECMC temps discret
+int update_until_reject_d(vector<Complex> &links, size_t site, int mu, array<SU3, 6> &list_staple,
+    const SU3 &R, int epsilon, const double &beta, const double &eta, mt19937_64 &rng);
 #endif //LQCD_ECMC_EMBEDDING_ECMC_H

@@ -353,3 +353,47 @@ vector<double> ecmc_samples(vector<Complex> &links, const Lattice &lat, double b
     }
     return meas_plaquette;
 }
+
+int update_until_reject_d(vector<Complex> &links, size_t site, int mu, array<SU3, 6> &list_staple,
+    const SU3 &R, int epsilon, const double &beta, const double &eta, mt19937_64 &rng) {
+    //Propose au lien des updates avec embedding jusqu'à ce qu'exactement une plaquette refuse le move.
+    //Continue les propositions tant que plusieurs ou aucune plaquette refuse.
+    //Renvoie l'angle de rejet et l'indice de la plaquette dans list_staples correspondant
+    double theta_update = 0.0;
+    array<int, 6> accepted_angles;
+    uniform_real_distribution<double> theta_dist(0.2, eta); //Pour tirer l'angle theta entre 0 et eta
+    uniform_real_distribution<double> unif(0.0, 1.0); //Pour test metropolis
+    SU3 proposition;
+    SU3 Uold;
+    SU3 Unew;
+    int proposed = 0;
+    while (true) {
+        theta_update = epsilon * theta_dist(rng);
+        for (int i = 0; i < 6; i++) {
+            proposition = R * el_3(theta_update) * R.adjoint();
+            Uold = view_link_const(links, site, mu);
+            Unew = proposition * view_link_const(links, site, mu);
+            double old_tr = (Uold * list_staple[i]).trace().real();
+            double new_tr = (Unew * list_staple[i]).trace().real();
+            double dS = -(beta/3.0) * (new_tr - old_tr);
+            proposed++;
+            bool accept = false;
+            if ((dS <= 0.0)||(unif(rng) < exp(-dS))) accept = true;
+            accepted_angles[i] = accept ? 1 : 0;
+
+        }
+        int sum = 0;
+        for (int i = 0; i < 6; i++) {
+            sum += accepted_angles[i];
+        }
+        if (sum == 6) {
+            ecmc_update(links, site, mu, theta_update, epsilon, R);
+        }
+        if (sum == 5) {
+            //cout << proposed << " propositions" << endl;
+            auto it  = min_element(accepted_angles.begin(), accepted_angles.end());
+            int j = distance(accepted_angles.begin(), it);
+            return j;
+        }
+    }
+}
