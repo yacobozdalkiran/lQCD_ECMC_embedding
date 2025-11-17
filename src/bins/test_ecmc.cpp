@@ -16,6 +16,7 @@ void in_main_ecmc() {
     double theta_refresh;
     int N_samples;
     double beta;
+    bool poisson;
     cout << "Beta = ";
     cin >> beta;
     cout << "theta_sample = ";
@@ -24,7 +25,8 @@ void in_main_ecmc() {
     cin >> theta_refresh;
     cout << "N_samples = ";
     cin >> N_samples;
-
+    cout << "Loi poisson ? (yes : 1, no : 0) :" <<endl;
+    cin >> poisson;
     int L = 4;
     int Nx = L, Ny = L, Nz = L, Nt = L;
     random_device rd;
@@ -44,7 +46,7 @@ void in_main_ecmc() {
     auto plaq = plaquette_stats(links, lat);
     cout << "Initial <P> = " << plaq.mean << " +- " << plaq.stddev << endl;
 
-    vector<double> meas_plaquette = ecmc_samples(links, lat, beta, N_samples, theta_sample, theta_refresh, rng);
+    vector<double> meas_plaquette = ecmc_samples(links, lat, beta, N_samples, theta_sample, theta_refresh, rng, poisson);
 
     plaq = plaquette_stats(links, lat);
     cout << "Plaquette finale : "<< endl;
@@ -62,7 +64,7 @@ void in_main_ecmc() {
     plaq = plaquette_stats(links, lat);
     cout << "Initial <P> = " << plaq.mean << " +- " << plaq.stddev << endl;
 
-    meas_plaquette = ecmc_samples(links, lat, beta, N_samples, theta_sample, theta_refresh, rng);
+    meas_plaquette = ecmc_samples(links, lat, beta, N_samples, theta_sample, theta_refresh, rng, poisson);
 
     plaq = plaquette_stats(links, lat);
     cout << "Plaquette finale : "<< endl;

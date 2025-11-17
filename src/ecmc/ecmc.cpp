@@ -225,25 +225,48 @@ void ecmc_update(vector<Complex> &links, size_t site, int mu, double theta, int 
     //projection_su3(links, site, mu);
 }
 
-vector<double> ecmc_samples(vector<Complex> &links, const Lattice &lat, double beta, int N_samples, double theta_sample, double theta_refresh, mt19937_64 &rng) {
+vector<double> ecmc_samples(vector<Complex> &links, const Lattice &lat, double beta, int N_samples, double param_theta_sample, double param_theta_refresh, mt19937_64 &rng, bool poisson) {
     size_t V = lat.V;
+
+    //Variables aléatoires
     uniform_int_distribution<size_t> random_site(0, V-1);
     uniform_int_distribution<int> random_dir(0,3);
     uniform_int_distribution<int> random_eps(0,1);
+    exponential_distribution<double> random_theta_sample(1.0/param_theta_sample);
+    exponential_distribution<double> random_theta_refresh(1.0/param_theta_refresh);
 
+
+    //Matrice lambda_3 de Gell-Mann
     SU3 lambda_3;
     lambda_3 << Complex(1.0,0.0), Complex(0.0,0.0), Complex(0.0,0.0),
                 Complex(0.0,0.0), Complex(-1.0,0.0), Complex(0.0, 0.0),
                 Complex(0.0,0.0), Complex(0.0,0.0), Complex(0.0, 0.0);
+
+    //Initialisation aléatoire de la position de la chaîne
     size_t site_current = random_site(rng);
     int mu_current = random_dir(rng);
     int epsilon_current = 2 * random_eps(rng) -1;
 
+    //Initialisation aléatoire des theta limites pour sample et refresh
+    double theta_sample{};
+    double theta_refresh{};
+    if (poisson) {
+        theta_sample = random_theta_sample(rng);
+        theta_refresh = random_theta_refresh(rng);
+    }
+    else {
+        theta_sample = param_theta_sample;
+        theta_refresh = param_theta_refresh;
+    }
+
+    //Initialisation des angles totaux parcourus à 0.0
     double theta_parcouru_sample = 0.0;
     double theta_parcouru_refresh= 0.0;
 
+    //Angle d'update
     double theta_update = 0.0;
 
+    //Arrays utilisés à chaque étape de la chaîne (évite de les initialiser des milliers de fois)
     array<double,6> reject_angles = {0.0, 0.0, 0.0, 0.0, 0.0};
     array<SU3,6> list_staple;
 
@@ -252,8 +275,9 @@ vector<double> ecmc_samples(vector<Complex> &links, const Lattice &lat, double b
 
     int samples = 0;
     array<double,2> deltas = {0.0,0.0};
-    //TODO:ajouter event-counter pour comparaison avec Metropolis
+    size_t event_counter = 0;
     vector<double> meas_plaquette;
+
     while (samples < N_samples) {
         compute_list_staples(links, lat, site_current, mu_current, list_staple);
         compute_reject_angles(links, site_current, mu_current, list_staple, R, epsilon_current,beta,reject_angles,rng);
@@ -273,17 +297,21 @@ vector<double> ecmc_samples(vector<Complex> &links, const Lattice &lat, double b
                 ecmc_update(links, site_current, mu_current, theta_update, epsilon_current, R);
                 cout << "Sample " << samples << ", ";
                 auto plaq = plaquette_stats(links, lat);
-                cout << "<P> = " << plaq.mean << " +- " << plaq.stddev << endl;
+                cout << "<P> = " << plaq.mean << " +- " << plaq.stddev << ", " << event_counter << " events" << endl;
+                event_counter = 0;
                 meas_plaquette.emplace_back(plaq.mean);
                 samples++;
                 theta_parcouru_sample = 0;
+                if (poisson) theta_sample = random_theta_sample(rng); //On retire un nouveau theta_sample
                 theta_parcouru_refresh += theta_update;
                 //On update jusqu'au refresh
                 theta_update = theta_refresh - theta_parcouru_refresh;
                 ecmc_update(links, site_current, mu_current, theta_update, epsilon_current, R);
                 theta_parcouru_sample += theta_update;
                 theta_parcouru_refresh = 0;
+                if (poisson) theta_refresh = random_theta_refresh(rng); //On retire un nouveau theta refresh
                 //On refresh
+                event_counter++;
                 site_current = random_site(rng);
                 mu_current = random_dir(rng);
                 epsilon_current = 2* random_eps(rng) -1;
@@ -295,7 +323,9 @@ vector<double> ecmc_samples(vector<Complex> &links, const Lattice &lat, double b
                 ecmc_update(links, site_current, mu_current, theta_update, epsilon_current, R);
                 theta_parcouru_sample += theta_update;
                 theta_parcouru_refresh = 0;
+                if (poisson) theta_refresh = random_theta_refresh(rng); //On retire un nouveau theta_refresh
                 //On refresh
+                event_counter++;
                 site_current = random_site(rng);
                 mu_current = random_dir(rng);
                 epsilon_current = 2* random_eps(rng) -1;
@@ -310,10 +340,12 @@ vector<double> ecmc_samples(vector<Complex> &links, const Lattice &lat, double b
                 //On sample
                 cout << "Sample " << samples << ", ";
                 auto plaq = plaquette_stats(links, lat);
-                cout << "<P> = " << plaq.mean << " +- " << plaq.stddev << endl;
+                cout << "<P> = " << plaq.mean << " +- " << plaq.stddev << ", " << event_counter << " events" << endl;
+                event_counter = 0;
                 meas_plaquette.emplace_back(plaq.mean);
                 samples++;
                 theta_parcouru_sample = 0;
+                if (poisson) theta_sample = random_theta_sample(rng); //On retire un nouveau theta_sample
                 theta_parcouru_refresh += theta_update;
                 //On finit l'update et on lift
                 theta_update = -deltas[F];
@@ -321,6 +353,7 @@ vector<double> ecmc_samples(vector<Complex> &links, const Lattice &lat, double b
                 theta_parcouru_sample += theta_update;
                 theta_parcouru_refresh += theta_update;
                 //On lifte
+                event_counter++;
                 auto l = lift(links, lat, site_current, mu_current, j, R, lambda_3, rng);
                 site_current = l.first.first;
                 mu_current = l.first.second;
@@ -332,7 +365,9 @@ vector<double> ecmc_samples(vector<Complex> &links, const Lattice &lat, double b
                 ecmc_update(links, site_current, mu_current, theta_update, epsilon_current, R);
                 theta_parcouru_sample += theta_update;
                 theta_parcouru_refresh = 0;
+                if (poisson) theta_refresh = random_theta_refresh(rng); //On retire un nouveau theta_refresh
                 //On refresh
+                event_counter++;
                 site_current = random_site(rng);
                 mu_current = random_dir(rng);
                 epsilon_current = 2* random_eps(rng) -1;
@@ -346,6 +381,7 @@ vector<double> ecmc_samples(vector<Complex> &links, const Lattice &lat, double b
             theta_parcouru_sample += theta_update;
             theta_parcouru_refresh += theta_update;
             //On lift
+            event_counter++;
             auto l = lift(links, lat, site_current, mu_current, j, R, lambda_3, rng);
             site_current = l.first.first;
             mu_current = l.first.second;
