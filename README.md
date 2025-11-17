@@ -102,39 +102,41 @@ Beta = 6.0
 theta_sample = 10000
 theta_refresh = 1000
 N_samples = 10
-Loi poisson ? (yes : 1, no : 0) :
-0
+Poisson law ? (yes : 1, no : 0) : 0
 Geometry initialized : L = 4, V = 256
+
 Cold start... 
 Initial <P> = 1 +- 0
 beta = 6
-Sample 0, <P> = 0.726567 +- 0.00182931, 30326 events
-Sample 1, <P> = 0.646757 +- 0.00215894, 29819 events
-Sample 2, <P> = 0.630111 +- 0.00241089, 30376 events
-Sample 3, <P> = 0.617283 +- 0.00249632, 30355 events
-Sample 4, <P> = 0.615897 +- 0.00248113, 30368 events
-Sample 5, <P> = 0.62518 +- 0.00227914, 30475 events
-Sample 6, <P> = 0.616828 +- 0.00257435, 30374 events
-Sample 7, <P> = 0.616576 +- 0.00235665, 30587 events
-Sample 8, <P> = 0.611548 +- 0.00248902, 30503 events
-Sample 9, <P> = 0.613121 +- 0.00246751, 30344 events
-Plaquette finale : 
-<P> = 0.613121 ± 0.00246751
-Ecriture des données...
+Sample 0, <P> = 0.736834 +- 0.00178981, 30491 events
+Sample 1, <P> = 0.657786 +- 0.00225725, 29722 events
+Sample 2, <P> = 0.627181 +- 0.00240389, 30013 events
+Sample 3, <P> = 0.62207 +- 0.00246158, 30260 events
+Sample 4, <P> = 0.618506 +- 0.00230837, 30316 events
+Sample 5, <P> = 0.615442 +- 0.00245077, 30306 events
+Sample 6, <P> = 0.604019 +- 0.00240745, 30507 events
+Sample 7, <P> = 0.613388 +- 0.00248805, 30474 events
+Sample 8, <P> = 0.613853 +- 0.0023788, 30361 events
+Sample 9, <P> = 0.612192 +- 0.00257995, 30518 events
+Final plaquette : 
+<P> = 0.612192 ± 0.00257995
+Writing data...
+
 Hot start... 
-Initial <P> = 0.00552358 +- 0.00313926
+Initial <P> = -0.00809392 +- 0.00287814
 beta = 6
-Sample 0, <P> = 0.371876 +- 0.00332067, 30672 events
-Sample 1, <P> = 0.437061 +- 0.00333759, 32337 events
-Sample 2, <P> = 0.476746 +- 0.00334412, 32461 events
-Sample 3, <P> = 0.49509 +- 0.00321389, 31860 events
-Sample 4, <P> = 0.518052 +- 0.00308264, 32068 events
-Sample 5, <P> = 0.524819 +- 0.00307153, 32199 events
-Sample 6, <P> = 0.535728 +- 0.00307301, 31709 events
-Sample 7, <P> = 0.545686 +- 0.00296952, 31696 events
-Sample 8, <P> = 0.560358 +- 0.00287375, 31636 events
-Sample 9, <P> = 0.551432 +- 0.00300093, 31347 events
-Plaquette finale : 
-<P> = 0.551375 ± 0.00300084
-Ecriture des données...
+Sample 0, <P> = 0.382902 +- 0.00331101, 30963 events
+Sample 1, <P> = 0.442582 +- 0.00327299, 32615 events
+Sample 2, <P> = 0.48202 +- 0.00314621, 32843 events
+Sample 3, <P> = 0.497703 +- 0.00327575, 32131 events
+Sample 4, <P> = 0.513254 +- 0.00311604, 31757 events
+Sample 5, <P> = 0.526483 +- 0.00299539, 31708 events
+Sample 6, <P> = 0.53425 +- 0.00290803, 31860 events
+Sample 7, <P> = 0.539642 +- 0.00295148, 31675 events
+Sample 8, <P> = 0.541349 +- 0.00292008, 31739 events
+Sample 9, <P> = 0.541747 +- 0.00306963, 31548 events
+Final plaquette : 
+<P> = 0.541736 ± 0.00306955
+Writing data...
+
 ```

@@ -25,7 +25,7 @@ void in_main_ecmc() {
     cin >> theta_refresh;
     cout << "N_samples = ";
     cin >> N_samples;
-    cout << "Loi poisson ? (yes : 1, no : 0) :" <<endl;
+    cout << "Poisson law ? (yes : 1, no : 0) : ";
     cin >> poisson;
     int L = 4;
     int Nx = L, Ny = L, Nz = L, Nt = L;
@@ -41,7 +41,7 @@ void in_main_ecmc() {
     vector<Complex> links(4*V*9);
 
     //On initialise tout à l'identité
-    cout << "Cold start... \n";
+    cout << "\nCold start... \n";
     cold_start(links, lat);
     auto plaq = plaquette_stats(links, lat);
     cout << "Initial <P> = " << plaq.mean << " +- " << plaq.stddev << endl;
@@ -49,17 +49,17 @@ void in_main_ecmc() {
     vector<double> meas_plaquette = ecmc_samples(links, lat, beta, N_samples, theta_sample, theta_refresh, rng, poisson);
 
     plaq = plaquette_stats(links, lat);
-    cout << "Plaquette finale : "<< endl;
+    cout << "Final plaquette : "<< endl;
     cout << "<P> = " << plaq.mean << " ± " << plaq.stddev << endl;
     string file = "plaquette_ecmc_cold.txt";
-    cout << "Ecriture des données..." << endl;
+    cout << "Writing data..." << endl;
     ofstream out(file);
     for (auto p : meas_plaquette) {
         out << p << " ";
     }
     out.close();
 
-    cout << "Hot start... \n";
+    cout << "\nHot start... \n";
     hot_start(links, lat,rng);
     plaq = plaquette_stats(links, lat);
     cout << "Initial <P> = " << plaq.mean << " +- " << plaq.stddev << endl;
@@ -67,10 +67,10 @@ void in_main_ecmc() {
     meas_plaquette = ecmc_samples(links, lat, beta, N_samples, theta_sample, theta_refresh, rng, poisson);
 
     plaq = plaquette_stats(links, lat);
-    cout << "Plaquette finale : "<< endl;
+    cout << "Final plaquette : "<< endl;
     cout << "<P> = " << plaq.mean << " ± " << plaq.stddev << endl;
     file = "plaquette_ecmc_hot.txt";
-    cout << "Ecriture des données..." << endl;
+    cout << "Writing data..." << endl;
     ofstream out_hot(file);
     for (auto p : meas_plaquette) {
         out_hot << p << " ";
