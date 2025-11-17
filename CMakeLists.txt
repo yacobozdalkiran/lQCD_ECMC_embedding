@@ -5,14 +5,18 @@ set(CMAKE_CXX_STANDARD 20)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -g -fno-omit-frame-pointer -march=native -Wall -Wextra")
 
-# Télécharge Eigen automatiquement si absent
-include(FetchContent)
-FetchContent_Declare(
-        eigen
-        GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
-        GIT_TAG 3.4.0  # version stable actuelle
-)
-FetchContent_MakeAvailable(eigen)
+#Si Eigen est déjà installé, laisser comme tel
+find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+
+
+# Si Eigen n'est pas installé, décommenter les lignes suivantes : télécharge Eigen automatiquement si absent
+#include(FetchContent)
+#FetchContent_Declare(
+#        eigen
+#        GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
+#        GIT_TAG 3.4.0  # version stable actuelle
+#)
+#FetchContent_MakeAvailable(eigen)
 
 add_executable(test_metropolis
         src/lattice/lattice.cpp
