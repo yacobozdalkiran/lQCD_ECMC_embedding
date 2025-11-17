@@ -42,3 +42,50 @@ PlaquetteStats plaquette_stats(const vector<Complex> &links, const Lattice &lat)
 
     return {mean, stddev};
 }
+
+SU3 clover_site(const vector<Complex> &links, const Lattice &lat, size_t site, int mu, int nu) {
+    //Computes G_{\mu\nu}(site) clover
+    if (mu==nu) cerr << "mu = nu => G(site, mu, nu) = 0" << endl;
+    size_t x = site;
+    size_t xpmu = lat.neighbor[x][mu][0]; //x+mu
+    size_t xpnu = lat.neighbor[x][nu][0]; //x+nu
+    size_t xmmu = lat.neighbor[x][mu][1]; //x-mu
+    size_t xmnu = lat.neighbor[x][nu][1]; //x-nu
+    size_t xmmupnu = lat.neighbor[xmmu][nu][0]; //x-mu+nu
+    size_t xmmumnu = lat.neighbor[xmmu][nu][1]; //x-mu-nu
+    size_t xpmumnu = lat.neighbor[xpmu][nu][1]; //x+mu-nu
+    SU3 clover = SU3::Zero();
+    clover += view_link_const(links, x, mu) * view_link_const(links, xpmu, nu) * view_link_const(links, xpnu, mu).adjoint() * view_link_const(links, x, nu).adjoint();
+    clover += view_link_const(links,x, nu) * view_link_const(links,xmmupnu, mu).adjoint() * view_link_const(links,xmmu,nu).adjoint() * view_link_const(links,xmmu,mu).adjoint();
+    clover += view_link_const(links,xmmu, mu).adjoint() * view_link_const(links,xmmumnu, nu).adjoint() * view_link_const(links,xmmumnu, mu) * view_link_const(links,xmnu, nu);
+    clover += view_link_const(links,xmnu, nu).adjoint() * view_link_const(links,xmnu, mu) * view_link_const(links,xpmumnu, nu) * view_link_const(links,x, mu).adjoint();
+    clover = 0.25 * clover.imag();
+    return clover;
+}
+
+double local_topo_charge_clover(const vector<Complex> &links, const Lattice &lat, size_t site) {
+    //Computes the local clover topological charge at site
+    double qclover = 0.0;
+    for (int mu = 0; mu < 4; mu++) {
+        for (int nu = 0; nu < 4; nu++) {
+            for (int rho =0; rho < 4; rho++) {
+                for (int sigma = 0; sigma < 4; sigma++) {
+                    if (levi_civita(mu,nu,rho,sigma) != 0) {
+                        double tr = (clover_site(links, lat, site, mu, nu) * clover_site(links, lat, site, rho, sigma)).trace().real();
+                        qclover += levi_civita(mu, nu, rho, sigma) * tr;
+                    }
+                }
+            }
+        }
+    }
+    qclover *= 1.0/(32 * M_PI * M_PI);
+    return qclover;
+}
+
+double topo_charge_clover(const vector<Complex> &links, const Lattice &lat) {
+    double q = 0.0;
+    for (size_t site = 0; site < lat.V; site++) {
+        q += local_topo_charge_clover(links, lat, site);
+    }
+    return q;
+}

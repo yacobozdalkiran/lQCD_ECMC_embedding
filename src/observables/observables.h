@@ -16,5 +16,22 @@ struct PlaquetteStats {
 
 PlaquetteStats plaquette_stats(const vector<Complex> &links, const Lattice &lat);
 
+SU3 clover_site(const vector<Complex> &links, const Lattice &lat, size_t site, int mu, int nu);
 
+inline int levi_civita(int mu, int nu, int rho, int sigma) {
+    if (mu == nu || mu == rho || mu == sigma || nu == rho || nu == sigma || rho == sigma) return 0;
+    int inv = 0;
+    inv += (mu > nu);
+    inv += (mu > rho);
+    inv += (mu > sigma);
+    inv += (nu > rho);
+    inv += (nu > sigma);
+    inv += (rho > sigma);
+
+    return (inv & 1) ? -1 : +1; //Parity test on inv
+}
+
+double local_topo_charge_clover(const vector<Complex> &links, const Lattice &lat, size_t site);
+
+double topo_charge_clover(const vector<Complex> &links, const Lattice &lat);
 #endif //LQCD_ECMC_EMBEDDING_OBSERVABLES_H
