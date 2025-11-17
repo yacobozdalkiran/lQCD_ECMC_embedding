@@ -29,10 +29,10 @@ PlaquetteStats plaquette_stats(const vector<Complex> &links, const Lattice &lat)
     for (size_t site = 0; site < lat.V; site++) {
         for (int mu = 0; mu < 4; mu++) {
             compute_staple(links, lat, site, mu, staple);
-            double p = (view_link_const(links, site, mu) * staple).trace().real() / 3.0;
+            double p = (view_link_const(links, site, mu) * staple).trace().real() / 18.0;
             sum += p;
             sum2 += p * p;
-            counter += 6; // 6 plaquettes par site
+            counter += 1; // 6 plaquettes par site
         }
     }
 
