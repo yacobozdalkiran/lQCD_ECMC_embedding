@@ -167,6 +167,7 @@ int selectVariable(const vector<double> &probas, mt19937_64 &rng) {
     return -1;
 }
 
+
 pair<pair<size_t, int>,int> lift(const vector<Complex> &links, const Lattice &lat, size_t site, int mu, int j, const SU3 &R, const SU3 &lambda_3, mt19937_64 &rng) {
     SU3 U0 = view_link_const(links, site, mu);
     auto links_staple_j = lat.staples[site][mu][j]; //Liste des 3 liens de la staple j
@@ -187,7 +188,7 @@ pair<pair<size_t, int>,int> lift(const vector<Complex> &links, const Lattice &la
     double sum =0.0;
     vector<int> sign_dS(4);
     vector<SU3> P(4);
-    //TODO:vérifier le calcul des staples, notamment forward/backward
+
     if (j%2 == 0) { //Forward plaquette
         P[0] = U0 * U1 * U2.adjoint() * U3.adjoint();
         P[1] = U1 * U2.adjoint() * U3.adjoint() * U0;
@@ -201,7 +202,7 @@ pair<pair<size_t, int>,int> lift(const vector<Complex> &links, const Lattice &la
         P[3] = U3 * U0 * U1.adjoint() * U2.adjoint();
     }
     for (int i = 0; i < 4; i++) {
-        probas[i] = (Complex(0.0,1.0) * lambda_3 * R.adjoint() * P[i]*R).trace().real();
+        probas[i] = -(Complex(0.0,1.0) * lambda_3 * R.adjoint() * P[i]*R).trace().real();
         sign_dS[i] = dsign(probas[i]);
         probas[i] = abs(probas[i]);
         sum += probas[i];

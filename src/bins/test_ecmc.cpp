@@ -135,6 +135,6 @@ void in_main_ecmc_d() {
 }
 
 int main() {
-    in_main_ecmc_d();
+    in_main_ecmc();
     return 0;
 }

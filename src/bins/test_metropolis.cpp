@@ -32,7 +32,7 @@ void in_main_metropolis() {
 
     double epsilon = 0.15;
     int n_set = 20; //Refresh du set tous les n_set sweeps
-    int n_meas = 10; //n_meas mesures de plaquettes
+    int n_meas = 100; //n_meas mesures de plaquettes
     int n_sweeps_meas = 100; //n_sweeps_meas sweeps entre chaque mesure
     int n_hits = 6; // n_hits hits par lien pour chaque sweep
     int n_burnin = 2000; //Burn-in a 2000 pour L=4 beta=6
