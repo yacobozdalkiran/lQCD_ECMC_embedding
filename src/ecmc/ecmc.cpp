@@ -277,7 +277,7 @@ vector<double> ecmc_samples(vector<Complex> &links, const Lattice &lat, double b
     array<double,2> deltas = {0.0,0.0};
     size_t event_counter = 0;
     vector<double> meas_plaquette;
-
+    //TODO : vérifier ce qu'il se passe autour de theta_sample/theta_refresh -> effets de bord
     while (samples < N_samples) {
         compute_list_staples(links, lat, site_current, mu_current, list_staple);
         compute_reject_angles(links, site_current, mu_current, list_staple, R, epsilon_current,beta,reject_angles,rng);
