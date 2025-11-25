@@ -63,12 +63,14 @@ void in_main_ecmc() {
     hot_start(links, lat,rng);
     plaq = plaquette_stats(links, lat);
     cout << "Initial <P> = " << plaq.mean << " +- " << plaq.stddev << endl;
+    cout << "Q = " << topo_charge_clover(links, lat) << endl;
 
     meas_plaquette = ecmc_samples(links, lat, beta, N_samples, theta_sample, theta_refresh, rng, poisson);
 
     plaq = plaquette_stats(links, lat);
     cout << "Final plaquette : "<< endl;
     cout << "<P> = " << plaq.mean << " ± " << plaq.stddev << endl;
+    cout << "Q = " << topo_charge_clover(links, lat) << endl;
     file = "plaquette_ecmc_hot.txt";
     cout << "Writing data..." << endl;
     ofstream out_hot(file);

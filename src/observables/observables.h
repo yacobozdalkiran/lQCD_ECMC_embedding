@@ -34,4 +34,6 @@ inline int levi_civita(int mu, int nu, int rho, int sigma) {
 double local_topo_charge_clover(const vector<Complex> &links, const Lattice &lat, size_t site);
 
 double topo_charge_clover(const vector<Complex> &links, const Lattice &lat);
+
+
 #endif //LQCD_ECMC_EMBEDDING_OBSERVABLES_H

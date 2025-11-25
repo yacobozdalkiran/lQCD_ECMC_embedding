@@ -293,6 +293,7 @@ vector<double> ecmc_samples(vector<Complex> &links, const Lattice &lat, double b
                 cout << "Sample " << samples << ", ";
                 auto plaq = plaquette_stats(links, lat);
                 cout << "<P> = " << plaq.mean << " +- " << plaq.stddev << ", " << event_counter << " events" << endl;
+                //cout << "Q = " << topo_charge_clover(links, lat) << endl;
                 event_counter = 0;
                 meas_plaquette.emplace_back(plaq.mean);
                 samples++;
@@ -336,6 +337,7 @@ vector<double> ecmc_samples(vector<Complex> &links, const Lattice &lat, double b
                 cout << "Sample " << samples << ", ";
                 auto plaq = plaquette_stats(links, lat);
                 cout << "<P> = " << plaq.mean << " +- " << plaq.stddev << ", " << event_counter << " events" << endl;
+                //cout << "Q = " << topo_charge_clover(links, lat) << endl;
                 event_counter = 0;
                 meas_plaquette.emplace_back(plaq.mean);
                 samples++;

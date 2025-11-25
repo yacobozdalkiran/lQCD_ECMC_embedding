@@ -75,6 +75,8 @@ vector<double> metropolis_samples(vector<Complex> &links, const Lattice &lat, do
             auto plaq = plaquette_stats(links, lat);
             measures[i/n_sweeps_meas] = plaq.mean;
             cout << "Measure " << i/n_sweeps_meas << ", " << "Metropolis step "<< i <<", <P> = " << plaq.mean << " ± " << plaq.stddev << ", acceptance = " << static_cast<double>(accepted) / static_cast<double>(proposed) << endl;
+            double qtopo = topo_charge_clover(links, lat);
+            cout << "Qtopo = " << qtopo << endl;
         }
     }
     auto end = chrono::high_resolution_clock::now();
