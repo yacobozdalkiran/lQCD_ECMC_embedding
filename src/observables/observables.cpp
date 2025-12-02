@@ -120,10 +120,10 @@ void measure_qtr_one_link_one_j(const vector<Complex> &links, const Lattice &lat
         P[3] = U3 * U0 * U1.adjoint() * U2.adjoint();
     }
 
-    qtr_link_j[0] = abs(P[0](0,0).imag()) + abs(P[0](1,1).imag());
-    qtr_link_j[1] = abs(P[1](0,0).imag()) + abs(P[1](1,1).imag());
-    qtr_link_j[2] = abs(P[2](0,0).imag()) + abs(P[2](1,1).imag());
-    qtr_link_j[3] = abs(P[3](0,0).imag()) + abs(P[3](1,1).imag());
+    qtr_link_j[0] = (-P[0](0,0).imag() + P[0](1,1).imag())/(P[0](0,0).imag() + P[0](1,1).imag());
+    qtr_link_j[1] = (-P[1](0,0).imag() + P[1](1,1).imag())/(P[1](0,0).imag() + P[1](1,1).imag());
+    qtr_link_j[2] = (-P[2](0,0).imag() + P[2](1,1).imag())/(P[2](0,0).imag() + P[2](1,1).imag());
+    qtr_link_j[3] = (-P[3](0,0).imag() + P[3](1,1).imag())/(P[3](0,0).imag() + P[3](1,1).imag());
     auto [mn, mx] = std::minmax_element(qtr_link_j.begin(), qtr_link_j.end());
     stat_qtr_link_j[0] = *mn;
     stat_qtr_link_j[1] = *mx;
