@@ -32,7 +32,7 @@ struct Lattice {
 };
 
 inline Eigen::Map<SU3> view_link(vector<Complex> &links, size_t site, int mu) {
-    //Permet de mapper les éléments d'un vecteur de complex en matrices SU3 Eigen (permet d'utiliser Eigen avec contiguité mémoire)
+    //Permet de mapper les éléments d'un vecteur de complex en matrices SU3 Eigen (permet d'utiliser Eigen avec contiguïté mémoire)
     return Eigen::Map<SU3>(&links[(site * 4 + mu) * 9]);
 }
 
