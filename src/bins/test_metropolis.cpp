@@ -12,7 +12,7 @@ void in_main_metropolis() {
     double beta;
     cout << "Beta = ";
     cin >> beta;
-    int L = 4;
+    int L = 6;
     int Nx = L, Ny = L, Nz = L, Nt = L;
     random_device rd;
     mt19937_64 rng(rd());
@@ -52,7 +52,59 @@ void in_main_metropolis() {
     cout << "Done!\n";
 }
 
+void in_main_metropolis_qtr() {
+    double beta;
+    cout << "Beta = ";
+    cin >> beta;
+    int L = 6;
+    int Nx = L, Ny = L, Nz = L, Nt = L;
+    random_device rd;
+    mt19937_64 rng(rd());
+    //On construit la lattice de sites
+    Lattice lat(Nx, Ny, Nz, Nt);
+    size_t V = lat.V;
+
+    cout << "Geometry initialized : L = " << L << ", V = " << V << "\n";
+
+    //On construit le vector de liens de jauge en mémoire contigue
+    vector<Complex> links(4*V*9);
+
+    //Hot start
+    hot_start(links, lat,rng);
+    auto hot = plaquette_stats(links, lat);
+    cout << "Hot start:  <P> = " << hot.mean << " ± " << hot.stddev << endl;
+
+    double epsilon = 0.15;
+    int n_set = 20; //Refresh du set tous les n_set sweeps
+    int n_meas = 10; //n_meas mesures de plaquettes
+    int n_sweeps_meas = 100; //n_sweeps_meas sweeps entre chaque mesure
+    int n_hits = 6; // n_hits hits par lien pour chaque sweep
+    int n_burnin = 2000; //Burn-in a 2000 pour L=4 beta=6
+
+    size_t accepted = 0;
+    size_t proposed = 0;
+
+    vector<double> measures = metropolis_samples(links, lat, beta, epsilon, n_set, n_meas, n_sweeps_meas, n_hits, n_burnin, accepted, proposed, rng);
+    vector<double> mins;
+    vector<double> maxs;
+    vector<double> means;
+    vector<double> vars;
+    vector<SU3> P(4);
+    cout << "Measuring stats on P..." << endl;
+    measure_qtr(links, lat, P, mins, maxs, means, vars);
+    cout << "Done !" << endl;
+    cout << "Writing to file...\n";
+    ofstream file("stats_qtr.txt");
+    if (!file) cerr << "Can't open file" << endl;
+    for (size_t i = 0; i < mins.size(); i++) {
+        file << mins[i] << " " << maxs[i] << " " << means[i] << " " << vars[i] << endl;
+    }
+    file.close();
+    cout << "Done !\n";
+}
+
+
 int main() {
-    in_main_metropolis();
+    in_main_metropolis_qtr();
     return 0;
 }
