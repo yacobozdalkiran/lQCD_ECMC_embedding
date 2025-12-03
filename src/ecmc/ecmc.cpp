@@ -175,10 +175,6 @@ pair<pair<size_t, int>,int> lift(const vector<Complex> &links, const Lattice &la
     links_plaquette_j[1] = links_staple_j[0];
     links_plaquette_j[2] = links_staple_j[1];
     links_plaquette_j[3] = links_staple_j[2];
-    //cout << "List des sites de la plaquette j :" << endl;
-    //cout << links_plaquette_j[0].first << endl << links_plaquette_j[1].first << endl << links_plaquette_j[2].first << endl << links_plaquette_j[3].first << endl;
-    //cout << "List des mu de la plaquette j :" << endl;
-    //cout << links_plaquette_j[0].second << endl << links_plaquette_j[1].second << endl << links_plaquette_j[2].second << endl << links_plaquette_j[3].second << endl;
     vector<double> probas(4);
     double sum =0.0;
     vector<int> sign_dS(4);
@@ -205,15 +201,77 @@ pair<pair<size_t, int>,int> lift(const vector<Complex> &links, const Lattice &la
     for (int i = 0; i < 4; i++) {
         probas[i] /= sum;
     }
-    //cout << "probas = [" << probas[0] << ", " << probas[1] << ", " << probas[2] << ", " << probas[3] << "]" << endl;
-    //cout << "sum probas = " << probas[0] + probas[1] + probas[2] + probas[3] << endl;
-    //cout << "sum = " << sum << endl;
-    //cout << "signs = [" << sign_dS[0] << ", " << sign_dS[1] << ", " << sign_dS[2] << ", " << sign_dS[3] << "]" << endl;
     int index_lift = selectVariable(probas, rng);
-    //cout << "index_lift = " << index_lift << endl;
     return make_pair(links_plaquette_j[index_lift], -sign_dS[index_lift]);
 }
 
+pair<pair<size_t, int>,int> lift_improved(const vector<Complex> &links, const Lattice &lat, size_t site, int mu, int j, SU3 &R, const SU3 &lambda_3, mt19937_64 &rng, const vector<SU3> &set) {
+    SU3 U0 = view_link_const(links, site, mu);
+    auto links_staple_j = lat.staples[site][mu][j]; //Liste des 3 liens de la staple j
+    SU3 U1 = view_link_const(links, links_staple_j[0].first, links_staple_j[0].second); //Les 3 matrices SU3 associées
+    SU3 U2 = view_link_const(links, links_staple_j[1].first, links_staple_j[1].second);
+    SU3 U3 = view_link_const(links, links_staple_j[2].first, links_staple_j[2].second);
+
+    array<pair<size_t, int>,4> links_plaquette_j; //On rajoute le lien actuel
+    links_plaquette_j[0] = make_pair(site, mu);
+    links_plaquette_j[1] = links_staple_j[0];
+    links_plaquette_j[2] = links_staple_j[1];
+    links_plaquette_j[3] = links_staple_j[2];
+    vector<double> probas(4);
+    vector<double> abs_dS(4);
+    double sum =0.0;
+    vector<int> sign_dS(4);
+    vector<SU3> P(4);
+
+    if (j%2 == 0) { //Forward plaquette
+        P[0] = U0 * U1 * U2.adjoint() * U3.adjoint();
+        P[1] = U1 * U2.adjoint() * U3.adjoint() * U0;
+        P[2] = U2 * U1.adjoint() * U0.adjoint()* U3;
+        P[3] = U3 * U2 * U1.adjoint() * U0.adjoint();
+    }
+    else { //Backward plaquette
+        P[0] = U0 * U1.adjoint() * U2.adjoint() * U3;
+        P[1] = U1 * U0.adjoint() * U3.adjoint() * U2;
+        P[2] = U2 * U1 * U0.adjoint()* U3.adjoint();
+        P[3] = U3 * U0 * U1.adjoint() * U2.adjoint();
+    }
+    for (int i = 0; i < 4; i++) {
+        probas[i] = -(Complex(0.0,1.0) * lambda_3 * R.adjoint() * P[i]*R).trace().real();
+        sign_dS[i] = dsign(probas[i]);
+        probas[i] = abs(probas[i]);
+        abs_dS[i] = probas[i];
+        sum += probas[i];
+    }
+    for (int i = 0; i < 4; i++) {
+        probas[i] /= sum;
+    }
+    int index_lift = selectVariable(probas, rng);
+
+    //On change le R
+    bool accepted = false;
+    uniform_int_distribution<size_t> distrib(0, set.size()-1);
+    uniform_real_distribution<double> uniform_0_1(0, 1);
+    size_t i_set = distrib(rng);
+    while (!accepted) {
+        SU3 R_new = set[i_set] * R;
+        double dS_j_R = abs_dS[index_lift];
+        double dS_j_R_new = abs((1i * lambda_3 * R_new.adjoint() * P[index_lift] * R_new).trace().real());
+        if (dS_j_R < dS_j_R_new) {
+            accepted = true;
+            R = R_new;
+        }
+        else {
+            double r = uniform_0_1(rng);
+            if (r < dS_j_R_new/dS_j_R) {
+                accepted = true;
+                R = R_new;
+            }
+        }
+    }
+
+
+    return make_pair(links_plaquette_j[index_lift], -sign_dS[index_lift]);
+}
 void ecmc_update(vector<Complex> &links, size_t site, int mu, double theta, int epsilon, const SU3 &R) {
     SU3 Uold = view_link_const(links, site, mu);
     view_link(links, site, mu) = R*el_3(epsilon*theta)*R.adjoint()*Uold;
@@ -391,7 +449,7 @@ vector<double> ecmc_samples(vector<Complex> &links, const Lattice &lat, double b
 int update_until_reject_d(vector<Complex> &links, size_t site, int mu, const array<SU3, 6> &list_staple,
     const SU3 &R, int epsilon, const double &beta, const double &eta, mt19937_64 &rng) {
     //Propose au lien des updates avec embedding jusqu'à ce qu'exactement une plaquette refuse le move.
-    //Continue les propositions tant que plusieurs ou aucune plaquette refuse.
+    //Continue les propositions tant que plusieurs ou aucune plaquette ne refuse.
     //Renvoie l'angle de rejet et l'indice de la plaquette dans list_staples correspondant
     double theta_update = 0.0;
     array<int, 6> accepted_angles{};
