@@ -80,6 +80,75 @@ void in_main_ecmc() {
     out_hot.close();
 }
 
+void in_main_ecmc_improved(double epsilon_set) {
+    //Test du ECMC en temps continu
+    double theta_sample;
+    double theta_refresh;
+    int N_samples;
+    double beta;
+    bool poisson;
+    cout << "Beta = ";
+    cin >> beta;
+    cout << "theta_sample = ";
+    cin >> theta_sample;
+    cout << "theta_refresh = ";
+    cin >> theta_refresh;
+    cout << "N_samples = ";
+    cin >> N_samples;
+    cout << "Poisson law ? (yes : 1, no : 0) : ";
+    cin >> poisson;
+    int L = 4;
+    int Nx = L, Ny = L, Nz = L, Nt = L;
+    random_device rd;
+    mt19937_64 rng(rd());
+    //On construit la lattice de sites
+    Lattice lat(Nx, Ny, Nz, Nt);
+    size_t V = lat.V;
+    cout << "Geometry initialized : L = " << L << ", V = " << V << "\n";
+
+    //On construit le vector de liens en mémoire contigue
+    vector<Complex> links(4*V*9);
+
+    //On initialise tout à l'identité
+    cout << "\nCold start... \n";
+    cold_start(links, lat);
+    auto plaq = plaquette_stats(links, lat);
+    cout << "Initial <P> = " << plaq.mean << " +- " << plaq.stddev << endl;
+
+    vector<double> meas_plaquette = ecmc_samples_improved(links, lat, beta, N_samples, theta_sample, theta_refresh, rng, poisson,epsilon_set);
+
+    plaq = plaquette_stats(links, lat);
+    cout << "Final plaquette : "<< endl;
+    cout << "<P> = " << plaq.mean << " ± " << plaq.stddev << endl;
+    string file = "plaquette_ecmci_cold.txt";
+    cout << "Writing data..." << endl;
+    ofstream out(file);
+    for (auto p : meas_plaquette) {
+        out << p << " ";
+    }
+    out.close();
+
+    cout << "\nHot start... \n";
+    hot_start(links, lat,rng);
+    plaq = plaquette_stats(links, lat);
+    cout << "Initial <P> = " << plaq.mean << " +- " << plaq.stddev << endl;
+    cout << "Q = " << topo_charge_clover(links, lat) << endl;
+
+    meas_plaquette = ecmc_samples_improved(links, lat, beta, N_samples, theta_sample, theta_refresh, rng, poisson, epsilon_set);
+
+    plaq = plaquette_stats(links, lat);
+    cout << "Final plaquette : "<< endl;
+    cout << "<P> = " << plaq.mean << " ± " << plaq.stddev << endl;
+    cout << "Q = " << topo_charge_clover(links, lat) << endl;
+    file = "plaquette_ecmci_hot.txt";
+    cout << "Writing data..." << endl;
+    ofstream out_hot(file);
+    for (auto p : meas_plaquette) {
+        out_hot << p << " ";
+    }
+    out_hot.close();
+}
+
 void in_main_ecmc_d() {
     //Test du ECMC en temps discret
     int L = 4;
@@ -139,6 +208,15 @@ void in_main_ecmc_d() {
 }
 
 int main() {
-    in_main_ecmc();
+    bool improved;
+    cout << "Improved ? (1:yes/0:no) : ";
+    cin >> improved;
+    if (improved) {
+        double epsilon_set;
+        cout << "epsilon_set = ";
+        cin >> epsilon_set;
+        in_main_ecmc_improved(epsilon_set);
+    }
+    else in_main_ecmc();
     return 0;
 }

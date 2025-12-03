@@ -248,29 +248,27 @@ pair<pair<size_t, int>,int> lift_improved(const vector<Complex> &links, const La
     int index_lift = selectVariable(probas, rng);
 
     //On change le R
-    bool accepted = false;
     uniform_int_distribution<size_t> distrib(0, set.size()-1);
     uniform_real_distribution<double> uniform_0_1(0, 1);
+    SU3 R_new;
     size_t i_set = distrib(rng);
-    while (!accepted) {
-        SU3 R_new = set[i_set] * R;
-        double dS_j_R = abs_dS[index_lift];
-        double dS_j_R_new = abs((1i * lambda_3 * R_new.adjoint() * P[index_lift] * R_new).trace().real());
-        if (dS_j_R < dS_j_R_new) {
-            accepted = true;
+    R_new = set[i_set] * R;
+    double dS_j_R = (-1i * lambda_3 * R.adjoint() * P[index_lift] * R).trace().real();
+    double dS_j_R_new = (-1i * lambda_3 * R_new.adjoint() * P[index_lift] * R_new).trace().real();
+    double new_epsilon = -sign_dS[index_lift];
+    if (abs(dS_j_R) < abs(dS_j_R_new)) {
+        R = R_new;
+        new_epsilon = -dsign(dS_j_R_new);
+    } else {
+        double r = uniform_0_1(rng);
+        if (r < abs(dS_j_R_new) / abs(dS_j_R)) {
             R = R_new;
-        }
-        else {
-            double r = uniform_0_1(rng);
-            if (r < dS_j_R_new/dS_j_R) {
-                accepted = true;
-                R = R_new;
-            }
+            new_epsilon = -dsign(dS_j_R_new);
         }
     }
 
 
-    return make_pair(links_plaquette_j[index_lift], -sign_dS[index_lift]);
+    return make_pair(links_plaquette_j[index_lift], new_epsilon);
 }
 void ecmc_update(vector<Complex> &links, size_t site, int mu, double theta, int epsilon, const SU3 &R) {
     SU3 Uold = view_link_const(links, site, mu);
@@ -278,7 +276,11 @@ void ecmc_update(vector<Complex> &links, size_t site, int mu, double theta, int 
     //projection_su3(links, site, mu);
 }
 
-vector<double> ecmc_samples(vector<Complex> &links, const Lattice &lat, double beta, int N_samples, double param_theta_sample, double param_theta_refresh, mt19937_64 &rng, bool poisson) {
+vector<double> ecmc_samples(vector<Complex> &links, const Lattice &lat, double beta, int N_samples,
+    double param_theta_sample, double param_theta_refresh, mt19937_64 &rng, bool poisson) {
+    if (param_theta_sample<param_theta_refresh) {
+        cerr << "Wrong args value, must have param_theta_sample>param_theta_refresh \n";
+    }
     size_t V = lat.V;
 
     //Variables aléatoires
@@ -330,7 +332,6 @@ vector<double> ecmc_samples(vector<Complex> &links, const Lattice &lat, double b
     array<double,2> deltas = {0.0,0.0};
     size_t event_counter = 0;
     vector<double> meas_plaquette;
-    //TODO : vérifier ce qu'il se passe autour de theta_sample/theta_refresh -> effets de bord
     while (samples < N_samples) {
         compute_list_staples(links, lat, site_current, mu_current, list_staple);
         compute_reject_angles(links, site_current, mu_current, list_staple, R, epsilon_current,beta,reject_angles,rng);
@@ -445,6 +446,189 @@ vector<double> ecmc_samples(vector<Complex> &links, const Lattice &lat, double b
     }
     return meas_plaquette;
 }
+
+
+vector<double> ecmc_samples_improved(vector<Complex> &links, const Lattice &lat, double beta, int N_samples,
+    double param_theta_sample, double param_theta_refresh, mt19937_64 &rng, bool poisson, double epsilon_set) {
+    if (param_theta_sample<param_theta_refresh) {
+        cerr << "Wrong args value, must have param_theta_sample>param_theta_refresh \n";
+    }
+    size_t V = lat.V;
+    //Set de matrices pour refresh R
+    int N_set = 100;
+    size_t lift_counter=0;
+    vector<SU3> set(N_set+1);
+    ecmc_set(epsilon_set, set, rng);
+
+    //Variables aléatoires
+    uniform_int_distribution<size_t> random_site(0, V-1);
+    uniform_int_distribution<int> random_dir(0,3);
+    uniform_int_distribution<int> random_eps(0,1);
+    exponential_distribution<double> random_theta_sample(1.0/param_theta_sample);
+    exponential_distribution<double> random_theta_refresh(1.0/param_theta_refresh);
+
+
+    //Matrice lambda_3 de Gell-Mann
+    SU3 lambda_3;
+    lambda_3 << Complex(1.0,0.0), Complex(0.0,0.0), Complex(0.0,0.0),
+                Complex(0.0,0.0), Complex(-1.0,0.0), Complex(0.0, 0.0),
+                Complex(0.0,0.0), Complex(0.0,0.0), Complex(0.0, 0.0);
+
+    //Initialisation aléatoire de la position de la chaîne
+    size_t site_current = random_site(rng);
+    int mu_current = random_dir(rng);
+    int epsilon_current = 2 * random_eps(rng) -1;
+
+    //Initialisation aléatoire des theta limites pour sample et refresh
+    double theta_sample{};
+    double theta_refresh{};
+    if (poisson) {
+        theta_sample = random_theta_sample(rng);
+        theta_refresh = random_theta_refresh(rng);
+    }
+    else {
+        theta_sample = param_theta_sample;
+        theta_refresh = param_theta_refresh;
+    }
+
+    //Initialisation des angles totaux parcourus à 0.0
+    double theta_parcouru_sample = 0.0;
+    double theta_parcouru_refresh= 0.0;
+
+    //Angle d'update
+    double theta_update = 0.0;
+
+    //Arrays utilisés à chaque étape de la chaîne (évite de les initialiser des milliers de fois)
+    array<double,6> reject_angles = {0.0, 0.0, 0.0, 0.0, 0.0};
+    array<SU3,6> list_staple;
+
+    SU3 R = random_su3(rng);
+    cout << "beta = " << beta << endl;
+
+    int samples = 0;
+    array<double,2> deltas = {0.0,0.0};
+    size_t event_counter = 0;
+    vector<double> meas_plaquette;
+    while (samples < N_samples) {
+        if (lift_counter%N_set ==0) {
+            ecmc_set(epsilon_set, set, rng);
+        }
+        compute_list_staples(links, lat, site_current, mu_current, list_staple);
+        compute_reject_angles(links, site_current, mu_current, list_staple, R, epsilon_current,beta,reject_angles,rng);
+        auto it = std::ranges::min_element(reject_angles.begin(), reject_angles.end());
+        auto j = static_cast<int>(ranges::distance(reject_angles.begin(), it)); //theta_reject = reject_angles[j]
+        //cout << "Angle reject : " << reject_angles[j] << endl;
+        deltas[0] = theta_sample - reject_angles[j] - theta_parcouru_sample;
+        deltas[1] = theta_refresh - reject_angles[j] - theta_parcouru_refresh;
+
+        auto it_deltas = std::ranges::min_element(deltas.begin(), deltas.end());
+        auto F = static_cast<int>(ranges::distance(deltas.begin(), it_deltas));
+
+        if ((deltas[0]<0)&&(deltas[1]<0)) {
+            if (F == 0) {
+                //On sample
+                theta_update = theta_sample - theta_parcouru_sample;
+                ecmc_update(links, site_current, mu_current, theta_update, epsilon_current, R);
+                cout << "Sample " << samples << ", ";
+                auto plaq = plaquette_stats(links, lat);
+                cout << "<P> = " << plaq.mean << " +- " << plaq.stddev << ", " << event_counter << " events" << endl;
+                //cout << "Q = " << topo_charge_clover(links, lat) << endl;
+                event_counter = 0;
+                meas_plaquette.emplace_back(plaq.mean);
+                samples++;
+                theta_parcouru_sample = 0;
+                if (poisson) theta_sample = random_theta_sample(rng); //On retire un nouveau theta_sample
+                theta_parcouru_refresh += theta_update;
+                //On update jusqu'au refresh
+                theta_update = theta_refresh - theta_parcouru_refresh;
+                ecmc_update(links, site_current, mu_current, theta_update, epsilon_current, R);
+                theta_parcouru_sample += theta_update;
+                theta_parcouru_refresh = 0;
+                if (poisson) theta_refresh = random_theta_refresh(rng); //On retire un nouveau theta refresh
+                //On refresh
+                event_counter++;
+                site_current = random_site(rng);
+                mu_current = random_dir(rng);
+                epsilon_current = 2* random_eps(rng) -1;
+                R = random_su3(rng);
+            }
+            if (F == 1) {
+                //On update jusqu'au refresh
+                theta_update = theta_refresh - theta_parcouru_refresh;
+                ecmc_update(links, site_current, mu_current, theta_update, epsilon_current, R);
+                theta_parcouru_sample += theta_update;
+                theta_parcouru_refresh = 0;
+                if (poisson) theta_refresh = random_theta_refresh(rng); //On retire un nouveau theta_refresh
+                //On refresh
+                event_counter++;
+                site_current = random_site(rng);
+                mu_current = random_dir(rng);
+                epsilon_current = 2* random_eps(rng) -1;
+                R = random_su3(rng);
+            }
+        }
+        else if (deltas[F]<0) {
+            if (F == 0) {
+                //On update jusqu'a theta_sample
+                theta_update = theta_sample - theta_parcouru_sample;
+                ecmc_update(links, site_current, mu_current, theta_update, epsilon_current, R);
+                //On sample
+                cout << "Sample " << samples << ", ";
+                auto plaq = plaquette_stats(links, lat);
+                cout << "<P> = " << plaq.mean << " +- " << plaq.stddev << ", " << event_counter << " events" << endl;
+                //cout << "Q = " << topo_charge_clover(links, lat) << endl;
+                event_counter = 0;
+                meas_plaquette.emplace_back(plaq.mean);
+                samples++;
+                theta_parcouru_sample = 0;
+                if (poisson) theta_sample = random_theta_sample(rng); //On retire un nouveau theta_sample
+                theta_parcouru_refresh += theta_update;
+                //On finit l'update et on lift
+                theta_update = -deltas[F];
+                ecmc_update(links, site_current, mu_current, theta_update, epsilon_current, R);
+                theta_parcouru_sample += theta_update;
+                theta_parcouru_refresh += theta_update;
+                //On lifte
+                event_counter++;
+                auto l = lift_improved(links, lat, site_current, mu_current, j, R, lambda_3, rng, set);
+                lift_counter++;
+                site_current = l.first.first;
+                mu_current = l.first.second;
+                epsilon_current = l.second;
+            }
+            if (F==1) {
+                //On update jusqu'à theta_refresh
+                theta_update = theta_refresh - theta_parcouru_refresh;
+                ecmc_update(links, site_current, mu_current, theta_update, epsilon_current, R);
+                theta_parcouru_sample += theta_update;
+                theta_parcouru_refresh = 0;
+                if (poisson) theta_refresh = random_theta_refresh(rng); //On retire un nouveau theta_refresh
+                //On refresh
+                event_counter++;
+                site_current = random_site(rng);
+                mu_current = random_dir(rng);
+                epsilon_current = 2* random_eps(rng) -1;
+                R = random_su3(rng);
+            }
+        }
+        else {
+            //On update
+            theta_update = reject_angles[j];
+            ecmc_update(links, site_current, mu_current, theta_update, epsilon_current, R);
+            theta_parcouru_sample += theta_update;
+            theta_parcouru_refresh += theta_update;
+            //On lift
+            event_counter++;
+            auto l = lift_improved(links, lat, site_current, mu_current, j, R, lambda_3, rng, set);
+            lift_counter++;
+            site_current = l.first.first;
+            mu_current = l.first.second;
+            epsilon_current = l.second;
+        }
+    }
+    return meas_plaquette;
+}
+
 
 int update_until_reject_d(vector<Complex> &links, size_t site, int mu, const array<SU3, 6> &list_staple,
     const SU3 &R, int epsilon, const double &beta, const double &eta, mt19937_64 &rng) {

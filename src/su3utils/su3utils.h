@@ -41,6 +41,8 @@ SU3 random_SU3_epsilon(double epsilon, mt19937_64 &rng);
 
 vector<SU3> metropolis_set(double epsilon, int size, mt19937_64 &rng);
 
+vector<SU3> ecmc_set(double epsilon, vector<SU3> &set, mt19937_64 &rng);
+
 void projection_su3(vector<Complex> &links, size_t site, int mu);
 
 #endif //LQCD_ECMC_EMBEDDING_SU3UTILS_H

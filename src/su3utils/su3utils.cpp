@@ -90,6 +90,19 @@ vector<SU3> metropolis_set(double epsilon, int size, mt19937_64 &rng) {
     return set;
 }
 
+
+
+vector<SU3> ecmc_set(double epsilon, vector<SU3> &set, mt19937_64 &rng) {
+    //Crée un set de matrices SU(3) epsilon-proches de l'identité de taille size avec leurs adjoints
+    size_t size = set.size()-1;
+    set[0] = SU3::Identity();
+    for (int i = 1; i < size+1; i+=2) {
+        set[i] = random_SU3_epsilon(epsilon, rng);
+        set[i+1] = set[i].adjoint();
+    }
+    return set;
+}
+
 void projection_su3(vector<Complex> &links, size_t site, int mu){
     //Reprojette sur SU3 en utilisant Gram-Schmidt
     SU3 U = view_link(links, site, mu);

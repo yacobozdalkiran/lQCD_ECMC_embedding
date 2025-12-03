@@ -12,7 +12,7 @@ void in_main_metropolis() {
     double beta;
     cout << "Beta = ";
     cin >> beta;
-    int L = 6;
+    int L = 4;
     int Nx = L, Ny = L, Nz = L, Nt = L;
     random_device rd;
     mt19937_64 rng(rd());
@@ -30,11 +30,11 @@ void in_main_metropolis() {
     auto hot = plaquette_stats(links, lat);
     cout << "Hot start:  <P> = " << hot.mean << " ± " << hot.stddev << endl;
 
-    double epsilon = 0.15;
+    double epsilon = 0.5;
     int n_set = 20; //Refresh du set tous les n_set sweeps
-    int n_meas = 10; //n_meas mesures de plaquettes
-    int n_sweeps_meas = 100; //n_sweeps_meas sweeps entre chaque mesure
-    int n_hits = 6; // n_hits hits par lien pour chaque sweep
+    int n_meas = 3000; //n_meas mesures de plaquettes
+    int n_sweeps_meas = 1; //n_sweeps_meas sweeps entre chaque mesure
+    int n_hits = 1; // n_hits hits par lien pour chaque sweep
     int n_burnin = 2000; //Burn-in a 2000 pour L=4 beta=6
 
     size_t accepted = 0;
