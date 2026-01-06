@@ -346,14 +346,14 @@ vector<double> ecmc_samples(vector<Complex> &links, const Lattice &lat, double b
     while (samples < N_samples) {
         compute_list_staples(links, lat, site_current, mu_current, list_staple);
         compute_reject_angles(links, site_current, mu_current, list_staple, R, epsilon_current,beta,reject_angles,rng);
-        auto it = std::ranges::min_element(reject_angles.begin(), reject_angles.end());
-        auto j = static_cast<int>(ranges::distance(reject_angles.begin(), it)); //theta_reject = reject_angles[j]
+        auto it = std::min_element(reject_angles.begin(), reject_angles.end());
+        auto j = static_cast<int>(std::distance(reject_angles.begin(), it)); //theta_reject = reject_angles[j]
         //cout << "Angle reject : " << reject_angles[j] << endl;
         deltas[0] = theta_sample - reject_angles[j] - theta_parcouru_sample;
         deltas[1] = theta_refresh - reject_angles[j] - theta_parcouru_refresh;
 
-        auto it_deltas = std::ranges::min_element(deltas.begin(), deltas.end());
-        auto F = static_cast<int>(ranges::distance(deltas.begin(), it_deltas));
+        auto it_deltas = std::min_element(deltas.begin(), deltas.end());
+        auto F = static_cast<int>(std::distance(deltas.begin(), it_deltas));
 
         if ((deltas[0]<0)&&(deltas[1]<0)) {
             if (F == 0) {
@@ -530,8 +530,8 @@ vector<double> ecmc_samples_improved(vector<Complex> &links, const Lattice &lat,
         }
         compute_list_staples(links, lat, site_current, mu_current, list_staple);
         compute_reject_angles(links, site_current, mu_current, list_staple, R, epsilon_current,beta,reject_angles,rng);
-        auto it = std::ranges::min_element(reject_angles.begin(), reject_angles.end());
-        auto j = static_cast<int>(ranges::distance(reject_angles.begin(), it)); //theta_reject = reject_angles[j]
+        auto it = std::min_element(reject_angles.begin(), reject_angles.end());
+        auto j = static_cast<int>(std::distance(reject_angles.begin(), it)); //theta_reject = reject_angles[j]
         //cout << "Angle reject : " << reject_angles[j] << endl;
         deltas[0] = theta_sample - reject_angles[j] - theta_parcouru_sample;
         deltas[1] = theta_refresh - reject_angles[j] - theta_parcouru_refresh;
@@ -540,8 +540,8 @@ vector<double> ecmc_samples_improved(vector<Complex> &links, const Lattice &lat,
         }
         proposed++;
 
-        auto it_deltas = std::ranges::min_element(deltas.begin(), deltas.end());
-        auto F = static_cast<int>(ranges::distance(deltas.begin(), it_deltas));
+        auto it_deltas = std::min_element(deltas.begin(), deltas.end());
+        auto F = static_cast<int>(std::distance(deltas.begin(), it_deltas));
 
         if ((deltas[0]<0)&&(deltas[1]<0)) {
             if (F == 0) {
@@ -689,8 +689,8 @@ int update_until_reject_d(vector<Complex> &links, size_t site, int mu, const arr
         }
         if (sum == 5) {
             //cout << proposed << " propositions" << endl;
-            auto it  = ranges::min_element(accepted_angles.begin(), accepted_angles.end());
-            int j = static_cast<int>(ranges::distance(accepted_angles.begin(), it));
+            auto it  = std::min_element(accepted_angles.begin(), accepted_angles.end());
+            int j = static_cast<int>(std::distance(accepted_angles.begin(), it));
             //std::cout << "Proposed angles : " << proposed << std::endl;
             return j;
         }
