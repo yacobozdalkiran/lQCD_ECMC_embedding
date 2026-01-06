@@ -41,6 +41,7 @@ void compute_reject(double A, double B, double &gamma, double &reject, int epsil
     //cout << "phi = " << phi << endl;
     double period = 0.0, p1 = 0.0, p2 = 0.0;
     array<double,4> intervals = {0.0, 0.0, 2*M_PI, 2*M_PI};
+    int discarded_number = 0;
     if (phi < M_PI/2.0) {
         //cout << "cas 1"<< endl;
         intervals[1] = M_PI/2.0 + phi;
@@ -50,6 +51,7 @@ void compute_reject(double A, double B, double &gamma, double &reject, int epsil
         if ((p1<0)&&(p2<0)) cerr << "Périodes négatives !"<< endl;
         period = p1+p2;
         //cout << "contrib periodique = " << period << endl;
+        discarded_number = std::floor(gamma/period);
         gamma = gamma - std::floor(gamma/period)*period;
         if (gamma>p1) {
             gamma -= p1;
@@ -86,6 +88,7 @@ void compute_reject(double A, double B, double &gamma, double &reject, int epsil
         if ((p1<0)&&(p2<0)) cerr << "Périodes négatives !"<< endl;
         period = p1+p2;
         //cout << "contrib periodique = " << period << endl;
+        discarded_number = std::floor(gamma/period);
         gamma = gamma - std::floor(gamma/period)*period;
         if (gamma>p1) {
             gamma -= p1;
@@ -118,6 +121,7 @@ void compute_reject(double A, double B, double &gamma, double &reject, int epsil
         period = R * ( sin(intervals[1] - phi) - sin(intervals[0] - phi) );
         if (period<0) cerr << "Période négative !"<< endl;
         //cout << "contrib periodique = " << period << endl;
+        discarded_number = std::floor(gamma/period);
         gamma = gamma - std::floor(gamma/period)*period;
         double alpha = gamma/R + sin(intervals[0]-phi);
         double theta1 = fmod((phi + asin(alpha) + 2* M_PI), 2*M_PI);
@@ -129,6 +133,7 @@ void compute_reject(double A, double B, double &gamma, double &reject, int epsil
             reject = theta2;
         }
     }
+    reject += 2*M_PI*discarded_number;
 }
 
 void compute_reject_angles(const vector<Complex> &links, size_t site, int mu, const array<SU3,6> &list_staple,

@@ -229,6 +229,6 @@ int main() {
     //     in_main_ecmc_improved(epsilon_set);
     // }
     // else in_main_ecmc();
-    in_main_ecmc();
+    in_main_ecmc_improved(0.15);
     return 0;
 }
