@@ -9,10 +9,12 @@
 #include <fstream>
 
 void in_main_metropolis() {
+    int L;
     double beta;
+    cout << "L = ";
+    cin >> L;
     cout << "Beta = ";
     cin >> beta;
-    int L = 4;
     int Nx = L, Ny = L, Nz = L, Nt = L;
     random_device rd;
     mt19937_64 rng(rd());
@@ -26,16 +28,16 @@ void in_main_metropolis() {
     vector<Complex> links(4*V*9);
 
     //Hot start
-    hot_start(links, lat,rng);
+    cold_start(links, lat);
     auto hot = plaquette_stats(links, lat);
-    cout << "Hot start:  <P> = " << hot.mean << " ± " << hot.stddev << endl;
+    cout << "Cold start:  <P> = " << hot.mean << " ± " << hot.stddev << endl;
 
-    double epsilon = 0.5;
+    double epsilon = 0.15;
     int n_set = 20; //Refresh du set tous les n_set sweeps
-    int n_meas = 3000; //n_meas mesures de plaquettes
+    int n_meas = 10000; //n_meas mesures de plaquettes
     int n_sweeps_meas = 1; //n_sweeps_meas sweeps entre chaque mesure
     int n_hits = 1; // n_hits hits par lien pour chaque sweep
-    int n_burnin = 2000; //Burn-in a 2000 pour L=4 beta=6
+    int n_burnin = 0; //Burn-in a 2000 pour L=4 beta=6
 
     size_t accepted = 0;
     size_t proposed = 0;
@@ -43,7 +45,7 @@ void in_main_metropolis() {
     vector<double> measures = metropolis_samples(links, lat, beta, epsilon, n_set, n_meas, n_sweeps_meas, n_hits, n_burnin, accepted, proposed, rng);
 
     cout << "Writing to file...\n";
-    ofstream file("metro_plaquette_hot.txt");
+    ofstream file("plaquette_metro_cold.txt");
     if (!file) cerr << "Can't open file" << endl;
     for (const auto &mea : measures) {
         file << mea << " ";

@@ -3,7 +3,6 @@
 //
 
 #include "observables.h"
-#include <algorithm>
 #include "../lattice/lattice.h"
 #include "../su3utils/su3utils.h"
 
@@ -45,6 +44,29 @@ PlaquetteStats plaquette_stats(const vector<Complex> &links, const Lattice &lat)
     double stddev = std::sqrt(var / static_cast<double>(counter)); // erreur sur la moyenne (σ/√N)
 
     return {mean, stddev};
+}
+
+double wilson_action(const vector<Complex> &links, const Lattice &lat, double beta) {
+    double action = 0.0;
+    size_t counter = 0;
+    SU3 U0, U1, U2, U3;
+    SU3 id = SU3::Identity();
+    SU3 plaquette;
+    for (size_t site = 0; site < lat.V; site++) {
+        for (int nu =0; nu<4; nu++) {
+            for (int mu = 0; mu<nu; mu++) {
+                U0 = view_link_const(links, site, mu);
+                U1 = view_link_const(links, lat.neighbor[site][mu][0], nu);
+                U2 = view_link_const(links, lat.neighbor[site][nu][0], mu).adjoint();
+                U3 = view_link_const(links, site, nu).adjoint();
+                plaquette = U0*U1*U2*U3;
+                action += (id - plaquette).trace().real();
+            }
+        }
+    }
+    action *= (1.0/3.0);
+    //action /= (lat.V*4.0);
+    return action;
 }
 
 SU3 clover_site(const vector<Complex> &links, const Lattice &lat, size_t site, int mu, int nu) {

@@ -15,7 +15,7 @@ void compute_reject(double A, double B, double &gamma, double &reject, int epsil
 void compute_reject_angles(const vector<Complex> &links, size_t site, int mu, const array<SU3,6> &list_staple,
     const SU3 &R, int epsilon, const double &beta, array<double,6> &reject_angles, mt19937_64 &rng);
 
-int selectVariable(const vector<double> &probas, mt19937_64 &rng);
+size_t selectVariable(const vector<double> &probas, mt19937_64 &rng);
 
 pair<pair<size_t, int>,int> lift(const vector<Complex> &links, const Lattice &lat, size_t site, int mu, int j,
     const SU3 &R, const SU3 &lambda_3, mt19937_64 &rng);

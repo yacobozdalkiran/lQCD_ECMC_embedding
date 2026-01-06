@@ -12,11 +12,14 @@
 
 void in_main_ecmc() {
     //Test du ECMC en temps continu
+    int L;
     double theta_sample;
     double theta_refresh;
     int N_samples;
     double beta;
     bool poisson;
+    cout << "L = ";
+    cin >> L;
     cout << "Beta = ";
     cin >> beta;
     cout << "theta_sample = ";
@@ -27,7 +30,6 @@ void in_main_ecmc() {
     cin >> N_samples;
     cout << "Poisson law ? (yes : 1, no : 0) : ";
     cin >> poisson;
-    int L = 4;
     int Nx = L, Ny = L, Nz = L, Nt = L;
     random_device rd;
     mt19937_64 rng(rd());
@@ -82,11 +84,14 @@ void in_main_ecmc() {
 
 void in_main_ecmc_improved(double epsilon_set) {
     //Test du ECMC en temps continu
+    int L;
     double theta_sample;
     double theta_refresh;
     int N_samples;
     double beta;
     bool poisson;
+    cout << "L = ";
+    cin >> L;
     cout << "Beta = ";
     cin >> beta;
     cout << "theta_sample = ";
@@ -97,7 +102,6 @@ void in_main_ecmc_improved(double epsilon_set) {
     cin >> N_samples;
     cout << "Poisson law ? (yes : 1, no : 0) : ";
     cin >> poisson;
-    int L = 4;
     int Nx = L, Ny = L, Nz = L, Nt = L;
     random_device rd;
     mt19937_64 rng(rd());
@@ -110,16 +114,22 @@ void in_main_ecmc_improved(double epsilon_set) {
     vector<Complex> links(4*V*9);
 
     //On initialise tout à l'identité
-    cout << "\nCold start... \n";
-    cold_start(links, lat);
+    //cout << "\nCold start... \n";
+    hot_start(links, lat, rng);
     auto plaq = plaquette_stats(links, lat);
     cout << "Initial <P> = " << plaq.mean << " +- " << plaq.stddev << endl;
+    cout << "Inital S = " << wilson_action(links, lat, beta) << endl;
 
+    auto start = chrono::high_resolution_clock::now();
     vector<double> meas_plaquette = ecmc_samples_improved(links, lat, beta, N_samples, theta_sample, theta_refresh, rng, poisson,epsilon_set);
+    auto end = chrono::high_resolution_clock::now();
+    auto elapsed = end - start;
+    cout << "Elapsed time : " << chrono::duration_cast<chrono::seconds>(elapsed).count() << " s" << endl;
 
     plaq = plaquette_stats(links, lat);
     cout << "Final plaquette : "<< endl;
     cout << "<P> = " << plaq.mean << " ± " << plaq.stddev << endl;
+    cout << "Final S = " << wilson_action(links, lat, beta) << endl;
     string file = "plaquette_ecmci_cold.txt";
     cout << "Writing data..." << endl;
     ofstream out(file);
@@ -179,16 +189,17 @@ void in_main_ecmc_d() {
     array<SU3, 6> list_staple;
     SU3 R = random_su3(rng);
     double beta = 6.0;
-    double eta = 0.5;
+    double eta = 0.15;
     SU3 lambda_3;
     lambda_3 << Complex(1.0,0.0), Complex(0.0,0.0), Complex(0.0,0.0),
                 Complex(0.0,0.0), Complex(-1.0,0.0), Complex(0.0, 0.0),
                 Complex(0.0,0.0), Complex(0.0,0.0), Complex(0.0, 0.0);
-
+    vector<SU3> set(10001);
+    ecmc_set(0.15, set, rng);
     for (int i = 0; i<100000; i++) {
         compute_list_staples(links, lat, site, mu, list_staple); //On calcule les 6 staples
         int j = update_until_reject_d(links, site, mu, list_staple, R, epsilon, beta, eta, rng); //On update le lien jusqu'à un rejet par la plaquette j
-        auto l = lift(links, lat, site, mu, j, R, lambda_3, rng); //On lifte dans la plaquette j
+        auto l = lift_improved(links, lat, site, mu, j, R, lambda_3, rng,set); //On lifte dans la plaquette j
         site = l.first.first;
         mu = l.first.second;
         epsilon = l.second;
@@ -208,15 +219,16 @@ void in_main_ecmc_d() {
 }
 
 int main() {
-    bool improved;
-    cout << "Improved ? (1:yes/0:no) : ";
-    cin >> improved;
-    if (improved) {
-        double epsilon_set;
-        cout << "epsilon_set = ";
-        cin >> epsilon_set;
-        in_main_ecmc_improved(epsilon_set);
-    }
-    else in_main_ecmc();
+    // bool improved;
+    // cout << "Improved ? (1:yes/0:no) : ";
+    // cin >> improved;
+    // if (improved) {
+    //     double epsilon_set;
+    //     cout << "epsilon_set = ";
+    //     cin >> epsilon_set;
+    //     in_main_ecmc_improved(epsilon_set);
+    // }
+    // else in_main_ecmc();
+    in_main_ecmc();
     return 0;
 }

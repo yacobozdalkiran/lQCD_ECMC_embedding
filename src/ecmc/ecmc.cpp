@@ -9,8 +9,8 @@
 
 void compute_list_staples(const vector<Complex> &links, const Lattice &lat, size_t site, int mu, array<SU3,6> &list_staple) {
     //Calcule la liste des staples autour un lien de jauge
-    int index = 0;
-    for (int nu = 0; nu < 4; nu++) {
+    size_t index = 0;
+    for (size_t nu = 0; nu < 4; nu++) {
         if (nu == mu) {
             continue;
         }
@@ -35,7 +35,7 @@ void compute_reject(double A, double B, double &gamma, double &reject, int epsil
     //TODO: A refactoriser pour rendre plus clair
     if (epsilon == -1) B = -B;
     double R = sqrt(A*A + B*B);
-    double phi = atan2(-A/R, B/R);
+    double phi = atan2(-A, B);
 
     if (phi<0) phi += 2*M_PI;
     //cout << "phi = " << phi << endl;
@@ -131,28 +131,32 @@ void compute_reject(double A, double B, double &gamma, double &reject, int epsil
     }
 }
 
-void compute_reject_angles(const vector<Complex> &links, size_t site, int mu, const array<SU3,6> &list_staple, const SU3 &R, int epsilon, const double &beta, array<double,6> &reject_angles, mt19937_64 &rng) {
+void compute_reject_angles(const vector<Complex> &links, size_t site, int mu, const array<SU3,6> &list_staple,
+    const SU3 &R, int epsilon, const double &beta, array<double,6> &reject_angles, mt19937_64 &rng) {
     //Calcule la liste des 6 angles de rejets pour le lien (site, mu) (1 angle par plaquette associée au lien)
     uniform_real_distribution<double> unif(0.0,1.0);
     for (int i = 0; i < 6; i++) {
         double gamma = -log(unif(rng));
-
-        SU3 P = R.adjoint() * view_link_const(links, site, mu) * list_staple[i] * R;
+        // SU3 lambda_3;
+        // lambda_3 << Complex(1.0,0.0), Complex(0.0,0.0) , Complex(0.0,0.0),
+        //                 Complex(0.0,0.0), Complex(-1.0,0.0), Complex(0.0,0.0),
+        //                 Complex(0.0,0.0), Complex(0.0,0.0), Complex(0.0,0.0);
+        SU3 P = R.adjoint() * view_link_const(links, site, mu) * list_staple[i] * R; // * lambda_3 * Complex(0.0, 1.0);
         double A = P(0,0).real() + P(1,1).real();
         double B = -P(0,0).imag() + P(1,1).imag();
         A *= -(beta/3.0);
         B *= -(beta/3.0);
-
+        //cout << "A = " << A << ", B = " << B << endl;
         compute_reject(A, B, gamma, reject_angles[i], epsilon);
     }
 }
 
-int selectVariable(const vector<double> &probas, mt19937_64 &rng) {
+size_t selectVariable(const vector<double> &probas, mt19937_64 &rng) {
     //Choisit un index entre 0 et probas.size()-1 selon la méthode tower of probas
     uniform_real_distribution<double> unif(0.0,1.0);
     double r = unif(rng);
     double s = 0.0;
-    for (int i = 0; i < static_cast<int>(probas.size()); i++) {
+    for (size_t i = 0; i < probas.size(); i++) {
         s += probas[i];
         if (s>r) {
            return i;
@@ -192,20 +196,21 @@ pair<pair<size_t, int>,int> lift(const vector<Complex> &links, const Lattice &la
         P[2] = U2 * U1 * U0.adjoint()* U3.adjoint();
         P[3] = U3 * U0 * U1.adjoint() * U2.adjoint();
     }
-    for (int i = 0; i < 4; i++) {
+    for (size_t i = 0; i < 4; i++) {
         probas[i] = -(Complex(0.0,1.0) * lambda_3 * R.adjoint() * P[i]*R).trace().real();
         sign_dS[i] = dsign(probas[i]);
         probas[i] = abs(probas[i]);
         sum += probas[i];
     }
-    for (int i = 0; i < 4; i++) {
+    for (size_t i = 0; i < 4; i++) {
         probas[i] /= sum;
     }
-    int index_lift = selectVariable(probas, rng);
+    size_t index_lift = selectVariable(probas, rng);
     return make_pair(links_plaquette_j[index_lift], -sign_dS[index_lift]);
 }
 
-pair<pair<size_t, int>,int> lift_improved(const vector<Complex> &links, const Lattice &lat, size_t site, int mu, int j, SU3 &R, const SU3 &lambda_3, mt19937_64 &rng, const vector<SU3> &set) {
+pair<pair<size_t, int>,int> lift_improved(const vector<Complex> &links, const Lattice &lat, size_t site, int mu, int j,
+    SU3 &R, const SU3 &lambda_3, mt19937_64 &rng, const vector<SU3> &set) {
     SU3 U0 = view_link_const(links, site, mu);
     auto links_staple_j = lat.staples[site][mu][j]; //Liste des 3 liens de la staple j
     SU3 U1 = view_link_const(links, links_staple_j[0].first, links_staple_j[0].second); //Les 3 matrices SU3 associées
@@ -235,17 +240,17 @@ pair<pair<size_t, int>,int> lift_improved(const vector<Complex> &links, const La
         P[2] = U2 * U1 * U0.adjoint()* U3.adjoint();
         P[3] = U3 * U0 * U1.adjoint() * U2.adjoint();
     }
-    for (int i = 0; i < 4; i++) {
+    for (size_t i = 0; i < 4; i++) {
         probas[i] = -(Complex(0.0,1.0) * lambda_3 * R.adjoint() * P[i]*R).trace().real();
         sign_dS[i] = dsign(probas[i]);
         probas[i] = abs(probas[i]);
         abs_dS[i] = probas[i];
         sum += probas[i];
     }
-    for (int i = 0; i < 4; i++) {
+    for (size_t i = 0; i < 4; i++) {
         probas[i] /= sum;
     }
-    int index_lift = selectVariable(probas, rng);
+    size_t index_lift = selectVariable(probas, rng);
 
     //On change le R
     uniform_int_distribution<size_t> distrib(0, set.size()-1);
@@ -270,6 +275,7 @@ pair<pair<size_t, int>,int> lift_improved(const vector<Complex> &links, const La
 
     return make_pair(links_plaquette_j[index_lift], new_epsilon);
 }
+
 void ecmc_update(vector<Complex> &links, size_t site, int mu, double theta, int epsilon, const SU3 &R) {
     SU3 Uold = view_link_const(links, site, mu);
     view_link(links, site, mu) = R*el_3(epsilon*theta)*R.adjoint()*Uold;
@@ -408,7 +414,7 @@ vector<double> ecmc_samples(vector<Complex> &links, const Lattice &lat, double b
                 ecmc_update(links, site_current, mu_current, theta_update, epsilon_current, R);
                 theta_parcouru_sample += theta_update;
                 theta_parcouru_refresh += theta_update;
-                //On lifte
+                //On lift
                 event_counter++;
                 auto l = lift(links, lat, site_current, mu_current, j, R, lambda_3, rng);
                 site_current = l.first.first;
@@ -505,6 +511,10 @@ vector<double> ecmc_samples_improved(vector<Complex> &links, const Lattice &lat,
     SU3 R = random_su3(rng);
     cout << "beta = " << beta << endl;
 
+    //Debug
+    size_t lifts = 0;
+    size_t proposed = 0;
+
     int samples = 0;
     array<double,2> deltas = {0.0,0.0};
     size_t event_counter = 0;
@@ -520,6 +530,10 @@ vector<double> ecmc_samples_improved(vector<Complex> &links, const Lattice &lat,
         //cout << "Angle reject : " << reject_angles[j] << endl;
         deltas[0] = theta_sample - reject_angles[j] - theta_parcouru_sample;
         deltas[1] = theta_refresh - reject_angles[j] - theta_parcouru_refresh;
+        if (deltas[1] > 0) {
+            lifts++;
+        }
+        proposed++;
 
         auto it_deltas = std::ranges::min_element(deltas.begin(), deltas.end());
         auto F = static_cast<int>(ranges::distance(deltas.begin(), it_deltas));
@@ -531,7 +545,10 @@ vector<double> ecmc_samples_improved(vector<Complex> &links, const Lattice &lat,
                 ecmc_update(links, site_current, mu_current, theta_update, epsilon_current, R);
                 cout << "Sample " << samples << ", ";
                 auto plaq = plaquette_stats(links, lat);
-                cout << "<P> = " << plaq.mean << " +- " << plaq.stddev << ", " << event_counter << " events" << endl;
+                cout << "<P> = " << plaq.mean << " +- " << plaq.stddev << ", " << static_cast<double>(lifts)/proposed * 100.0 << "% lifts " << endl;
+                cout << "S = " << wilson_action(links, lat, beta) << endl;
+                lifts = 0;
+                proposed = 0;
                 //cout << "Q = " << topo_charge_clover(links, lat) << endl;
                 event_counter = 0;
                 meas_plaquette.emplace_back(plaq.mean);
@@ -575,8 +592,11 @@ vector<double> ecmc_samples_improved(vector<Complex> &links, const Lattice &lat,
                 //On sample
                 cout << "Sample " << samples << ", ";
                 auto plaq = plaquette_stats(links, lat);
-                cout << "<P> = " << plaq.mean << " +- " << plaq.stddev << ", " << event_counter << " events" << endl;
+                cout << "<P> = " << plaq.mean << " +- " << plaq.stddev << ", " << static_cast<double>(lifts)/proposed * 100 << "% lifts" << endl;
+                cout << "S = " << wilson_action(links, lat, beta) << endl;
                 //cout << "Q = " << topo_charge_clover(links, lat) << endl;
+                lifts = 0;
+                proposed = 0;
                 event_counter = 0;
                 meas_plaquette.emplace_back(plaq.mean);
                 samples++;
@@ -648,7 +668,7 @@ int update_until_reject_d(vector<Complex> &links, size_t site, int mu, const arr
             SU3 Unew = proposition * view_link_const(links, site, mu);
             double old_tr = (Uold * list_staple[i]).trace().real();
             double new_tr = (Unew * list_staple[i]).trace().real();
-            double dS = -(beta/3.0) * (new_tr - old_tr);
+            double dS = (beta/3.0) * (new_tr - old_tr);
             proposed++;
             bool accept = false;
             if ((dS <= 0.0)||(unif(rng) < exp(-dS))) accept = true;
@@ -663,9 +683,10 @@ int update_until_reject_d(vector<Complex> &links, size_t site, int mu, const arr
             ecmc_update(links, site, mu, theta_update, epsilon, R);
         }
         if (sum == 5) {
-            cout << proposed << " propositions" << endl;
+            //cout << proposed << " propositions" << endl;
             auto it  = ranges::min_element(accepted_angles.begin(), accepted_angles.end());
             int j = static_cast<int>(ranges::distance(accepted_angles.begin(), it));
+            //std::cout << "Proposed angles : " << proposed << std::endl;
             return j;
         }
     }

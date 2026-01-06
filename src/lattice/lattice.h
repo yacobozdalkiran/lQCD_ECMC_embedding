@@ -11,7 +11,6 @@
 #include <Eigen/Dense>
 #include <complex>
 #include <random>
-#include <string>
 
 using Complex = std::complex<double>;
 using SU3 = Eigen::Matrix3cd;
